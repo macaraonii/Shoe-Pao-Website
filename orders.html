@@ -225,7 +225,8 @@
                     <table id="ordersTable" style="width:100%;border-collapse:collapse;font-family:'Poppins',Arial,sans-serif;">
                         <thead>
                             <tr style="text-align:left;color:#444;border-bottom:1px solid #eee;">
-                                <th style="padding:14px 12px;min-width:140px;">Order ID</th>
+                                            <th style="padding:14px 12px;min-width:60px;">No.</th>
+                                            <th style="padding:14px 12px;min-width:140px;">Order ID</th>
                                 <th style="padding:14px 12px;min-width:160px;">Customer Name</th>
                                 <th style="padding:14px 12px;min-width:120px;">Date Ordered</th>
                                 <th style="padding:14px 12px;min-width:140px;">Payment Method</th>
@@ -302,27 +303,13 @@
     (function(){
         const year = new Date().getFullYear();
 
-        // Load persisted orders from localStorage if present; otherwise seed with sample data and persist it.
-        let ordersData = null;
+        // Load persisted orders from localStorage if present; otherwise start with an empty list.
+        let ordersData = [];
         try {
-            ordersData = JSON.parse(localStorage.getItem('orders')) || null;
+            ordersData = JSON.parse(localStorage.getItem('orders') || '[]');
+            if (!Array.isArray(ordersData)) ordersData = [];
         } catch (e) {
-            ordersData = null;
-        }
-        if (!ordersData) {
-            ordersData = [
-                { id: `#ORD${year}2051`, name: 'John Dela Cruz', date: 'May 21, ' + year, payment: 'bank transfer', deliveryMethod: 'Personal Delivery', total: 1299, status: 'pending', est: 'May 20-25, ' + year, tracking: '' },
-                { id: `#ORD${year}2052`, name: 'Fatima Saleh', date: 'May 21, ' + year, payment: 'Gcash', deliveryMethod: 'Lalamove', total: 2395, status: 'confirmed', est: 'May 20-25, ' + year, tracking: '' },
-                { id: `#ORD${year}2053`, name: 'Bryan Santos', date: 'May 22, ' + year, payment: 'Gcash', deliveryMethod: 'Nationwide Delivery', total: 2395, status: 'shipped', est: 'May 20-25, ' + year, tracking: '' },
-                { id: `#ORD${year}2054`, name: 'Mark Villanueva', date: 'May 22, ' + year, payment: 'cash on delivery', deliveryMethod: 'Personal Delivery', total: 2395, status: 'delivered', est: 'May 20-25, ' + year, tracking: 'TR09274981' },
-                { id: `#ORD${year}2055`, name: 'Liza Mendoza', date: 'May 23, ' + year, payment: 'cash on delivery', deliveryMethod: 'Lalamove', total: 2395, status: 'cancelled', est: '', tracking: '' },
-                { id: `#ORD${year}2056`, name: 'Glaiza Reformado', date: 'May 23, ' + year, payment: 'Gcash', deliveryMethod: 'Nationwide Delivery', total: 1299, status: 'pending', est: '', tracking: '' },
-                { id: `#ORD${year}2057`, name: 'Jemar Eden', date: 'May 24, ' + year, payment: 'Maya', deliveryMethod: 'Nationwide Delivery', total: 1299, status: 'confirmed', est: 'May 20-25, ' + year, tracking: '' },
-                { id: `#ORD${year}2058`, name: 'Uriel De Leon', date: 'May 24, ' + year, payment: 'Maya', deliveryMethod: 'Lalamove', total: 2395, status: 'pending', est: '', tracking: '' },
-                { id: `#ORD${year}2059`, name: 'Mara Gahum', date: 'May 25, ' + year, payment: 'Gcash', deliveryMethod: 'Nationwide Delivery', total: 1299, status: 'pending', est: '', tracking: '' },
-                { id: `#ORD${year}2060`, name: 'Evann Gahum', date: 'May 25, ' + year, payment: 'Gcash', deliveryMethod: 'Personal Delivery', total: 1299, status: 'cancelled', est: '', tracking: '' }
-            ];
-            try { localStorage.setItem('orders', JSON.stringify(ordersData)); } catch (e) { /* ignore */ }
+            ordersData = [];
         }
 
     let currentList = ordersData.slice();
@@ -350,9 +337,10 @@
                 var fallbackProfileName = '';
                 try{ fallbackProfileName = JSON.parse(localStorage.getItem('profile')||'{}').name || ''; }catch(e){}
                 var displayName = row.customerName || row.name || fallbackProfileName || '';
-                tr.innerHTML = `
-                    <td style="padding:12px;border-bottom:1px solid #fafafa;">${row.id}</td>
-                    <td style="padding:12px;border-bottom:1px solid #fafafa;">${titleCase(displayName)}</td>
+            tr.innerHTML = `
+                <td style="padding:12px;border-bottom:1px solid #fafafa;">${idx}</td>
+                <td style="padding:12px;border-bottom:1px solid #fafafa;">${row.id}</td>
+                <td style="padding:12px;border-bottom:1px solid #fafafa;">${titleCase(displayName)}</td>
                     <td style="padding:12px;border-bottom:1px solid #fafafa;">${titleCase(row.date)}</td>
                     <td style="padding:12px;border-bottom:1px solid #fafafa;">${titleCase(row.paymentLabel || row.payment || (row.paymentCode? (row.paymentCode==='qr_ph'? 'QR PH' : (row.paymentCode==='bank_transfer'? 'Bank Transfer' : (row.paymentCode==='cod'? 'Cash on Delivery' : row.paymentCode))) : ''))}</td>
                     <td style="padding:12px;border-bottom:1px solid #fafafa;">${titleCase(row.deliveryMethod || '')}</td>
@@ -470,7 +458,11 @@
         // Listen for orders updates from other tabs/windows and refresh
         window.addEventListener('storage', function(e){
             if(e.key === 'orders'){
-                try{ currentList = JSON.parse(localStorage.getItem('orders') || '[]'); applySort(); renderTable(currentList); }catch(err){/* ignore */}
+                try{
+                    ordersData = JSON.parse(localStorage.getItem('orders') || '[]');
+                    currentList = ordersData.slice();
+                    applySort(); renderTable(currentList);
+                }catch(err){/* ignore */}
             }
         });
 
