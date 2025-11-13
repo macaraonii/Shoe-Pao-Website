@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LocalStorage Import / Export — ShoePao</title>
+  <style>
+    body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:24px;color:#111}
+    h1{font-size:20px;margin-bottom:8px}
+    .row{display:flex;gap:12px;align-items:center;margin:12px 0}
+    button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#f6f6f6;cursor:pointer}
+    pre{background:#111;color:#fff;padding:12px;border-radius:8px;max-height:260px;overflow:auto}
+    .keys{margin-top:12px}
+    label{display:block;margin:4px 0}
+    .warning{color:#a00;margin-top:8px}
+    input[type=file]{padding:6px}
+  </style>
+</head>
+<body>
+  <h1>LocalStorage Import / Export</h1>
+  <p>Use this page to export your browser's localStorage (orders, cart, profile) to a JSON file, or import a JSON file exported from another browser/device.</p>
+
+  <div class="row">
+    <button id="export">Export localStorage</button>
+    <span id="exportNote"></span>
+  </div>
+
+  <div class="row">
+    <input id="file" type="file" accept="application/json" />
+    <button id="load">Load file</button>
+    <button id="import" disabled>Import selected keys</button>
+  </div>
+
+  <div id="keysContainer" class="keys"></div>
+
+  <div style="margin-top:14px">
+    <button id="clearPreview">Clear preview</button>
+  </div>
+
+  <h3>Preview / Output</h3>
+  <pre id="output">No file loaded.</pre>
+
+  <p class="warning">Warning: importing will overwrite existing keys with the same names. Use with caution.</p>
+
+  <script>
+    const exportBtn = document.getElementById('export');
+    const fileInput = document.getElementById('file');
+    const loadBtn = document.getElementById('load');
+    const importBtn = document.getElementById('import');
+    const output = document.getElementById('output');
+    const keysContainer = document.getElementById('keysContainer');
+    const clearPreview = document.getElementById('clearPreview');
+
+    exportBtn.addEventListener('click', ()=>{
+      const obj = {};
+      for (let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        obj[k] = localStorage.getItem(k);
+      }
+      const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'localStorage-export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('exportNote').textContent = ' exported';
+    });
+
+    loadBtn.addEventListener('click', ()=>{
+      const f = fileInput.files[0];
+      if (!f) return alert('Choose a JSON file first');
+      f.text().then(text=>{
+        try{ const parsed = JSON.parse(text); previewLoaded(parsed); }
+        catch(e){ alert('Invalid JSON file'); }
+      });
+    });
+
+    function previewLoaded(obj){
+      output.textContent = JSON.stringify(obj, null, 2);
+      // build checkbox list
+      keysContainer.innerHTML = '';
+      const keys = Object.keys(obj);
+      if (!keys.length) keysContainer.textContent = 'No keys found in file.';
+      keys.forEach(k=>{
+        const id = 'chk_'+k.replace(/[^a-z0-9]/gi,'_');
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" id="${id}" checked data-key="${k}"> <strong>${k}</strong>`;
+        keysContainer.appendChild(label);
+      });
+      importBtn.disabled = false;
+    }
+
+    importBtn.addEventListener('click', ()=>{
+      const checks = keysContainer.querySelectorAll('input[type=checkbox]');
+      if (!checks.length) return alert('No keys to import');
+      const toImport = [];
+      checks.forEach(c=>{ if (c.checked) toImport.push(c.dataset.key); });
+      if (!toImport.length) return alert('Pick at least one key');
+      if (!confirm('This will overwrite the selected keys in this browser. Continue?')) return;
+      const obj = JSON.parse(output.textContent || '{}');
+      toImport.forEach(k=> localStorage.setItem(k, obj[k]));
+      alert('Imported keys: ' + toImport.join(', '));
+    });
+
+    clearPreview.addEventListener('click', ()=>{
+      output.textContent = 'No file loaded.';
+      keysContainer.innerHTML = '';
+      importBtn.disabled = true;
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>
