@@ -288,6 +288,10 @@
             <div class="payment-divider"></div>
             <div class="payment-upload-title">Upload proof of payment here</div>
             <div class="payment-upload-box">+ Upload Proof of Payment</div>
+            <div style="margin-top:12px;">
+                <label for="referenceNumber" style="display:block;font-size:0.98rem;color:#222;margin-bottom:6px;">Reference Number</label>
+                <input id="referenceNumber" type="text" placeholder="Enter reference number" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:1rem;box-sizing:border-box;" />
+            </div>
             <div class="payment-btn-row">
                 <button class="payment-placeorder-btn" id="placeOrderBtn">Place order</button>
             </div>
@@ -437,12 +441,39 @@
             total: subtotal,
             paymentCode: selectedPaymentCode,
             paymentLabel: selectedPaymentLabel,
+            referenceNumber: (document.getElementById('referenceNumber') ? document.getElementById('referenceNumber').value : ''),
             customerName: customerName,
             deliveryCode: deliveryCode,
             deliveryLabel: deliveryLabel,
             deliveryMethod: deliveryLabel
         };
         var orders = JSON.parse(localStorage.getItem('orders') || '[]');
+        // Before saving the order, decrement inventory counts for purchased items
+        try {
+            var inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            if (Array.isArray(inventory) && inventory.length) {
+                items.forEach(function(it){
+                    try {
+                        var qty = Number(it.quantity || it.qty || 0);
+                        var size = (it.size || '').toString();
+                        // find matching inventory row by id/name/brand
+                        var invRow = null;
+                        if (it.id) invRow = inventory.find(function(r){ return r.id === it.id; });
+                        if(!invRow) invRow = inventory.find(function(r){ return (r.name||'').toString().trim() === (it.title||'').toString().trim(); });
+                        if(!invRow) invRow = inventory.find(function(r){ return (r.name||'').toString().toLowerCase().indexOf((it.title||'').toString().toLowerCase()) !== -1; });
+                        if(!invRow && it.brand) invRow = inventory.find(function(r){ return (r.brand||'').toString().toLowerCase() === (it.brand||'').toString().toLowerCase(); });
+                        if (invRow && invRow.sizes && size) {
+                            var currentStock = Number(invRow.sizes[size] || 0);
+                            var newStock = currentStock - qty;
+                            if (isNaN(newStock) || newStock < 0) newStock = 0;
+                            invRow.sizes[size] = newStock;
+                        }
+                    } catch(e) { }
+                });
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+            }
+        } catch (e) { /* ignore inventory update errors */ }
+
         orders.push(order);
         localStorage.setItem('orders', JSON.stringify(orders));
         // clear cart
@@ -642,9 +673,20 @@
                 btn.onclick = function(e) {
                     const idx = parseInt(btn.getAttribute('data-index'), 10);
                     if (!isNaN(idx) && cart[idx]) {
-                        cart[idx].quantity++;
-                        renderCart();
-                        saveCartToLocalStorage();
+                            try {
+                                var item = cart[idx];
+                                var current = Number(item.quantity || 0);
+                                var maxAllowed = (window.getMaxAllowedForProduct && typeof window.getMaxAllowedForProduct === 'function') ? window.getMaxAllowedForProduct(item) : 3;
+                                if (current >= maxAllowed) {
+                                    alert('Limit reached: you can only buy up to ' + maxAllowed + ' of this size.');
+                                    return;
+                                }
+                                cart[idx].quantity++;
+                            } catch (err) {
+                                cart[idx].quantity++;
+                            }
+                            renderCart();
+                            saveCartToLocalStorage();
                     }
                 };
             });

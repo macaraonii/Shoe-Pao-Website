@@ -172,12 +172,18 @@
             margin-left: 7vw;
             margin-bottom: 24px;
         }
+        /* center headers for Sale and New Arrivals only */
+        section#sale .section-header,
+        section#new-arrivals .section-header {
+            margin-left: 0;
+            text-align: center;
+            margin: 0 auto 24px auto;
+        }
         .sale-row {
             display: flex;
             gap: 32px;
-            justify-content: flex-start;
-            margin-left: 0;
-            margin-bottom: 48px;
+            justify-content: center;
+            margin: 0 auto 48px auto;
         }
         .shoe-card {
             background: none;
@@ -198,6 +204,10 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+        /* flip horizontal orientation of shoes in the New Arrivals segment */
+        #new-arrivals .shoe-img {
+            transform: scaleX(-1);
         }
         .badge-sale {
             position: absolute;
@@ -259,8 +269,8 @@
         .brand-filter-row {
             display: flex;
             gap: 18px;
-            margin-left: 0;
-            margin-bottom: 32px;
+            justify-content: center;
+            margin: 0 auto 32px auto;
         }
         .brand-filter-btn {
             display: flex;
@@ -287,60 +297,40 @@
         .arrival-row {
             display: flex;
             gap: 32px;
-            justify-content: flex-start;
-            margin-left: 0;
-            margin-bottom: 48px;
+            justify-content: center;
+            margin: 0 auto 48px auto;
         }
         .brands-panel {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 32px;
-            margin-left: 0;
-            margin-right: 0;
-            margin-bottom: 64px;
+            display: flex;
+            gap: 36px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 12px 0;
+            margin: 0 auto 64px auto;
         }
         .brand-card {
-            position: relative;
-            border-radius: 0;
-            overflow: hidden;
-            width: 100%;
-            height: 480px;
             display: flex;
-            align-items: flex-end;
-            background: #eee;
+            align-items: center;
+            justify-content: center;
+            width: 220px;
+            height: auto;
+            padding: 20px;
+            background: transparent;
+            border-radius: 6px;
         }
-        .brand-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .brand-logo-link{display:block;text-align:center;width:100%;}
+        .brand-logo {
+            max-width: 60%;
+            height: auto;
+            display: inline-block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.08));
         }
-        .brand-info {
-            position: absolute;
-            left: 24px;
-            bottom: 24px;
-            color: #fff;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .brand-name {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #fff;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.18);
-        }
-        .shop-brand-btn {
-            background: #fff;
-            color: #222;
-            border: none;
-            border-radius: 22px;
-            padding: 8px 22px;
-            font-size: 1.05rem;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        /* increase specific logos by ~30% */
+        .brand-logo--nike,
+        .brand-logo--adidas,
+        .brand-logo--newbalance {
+            max-width: 78%;
         }
         .footer-section {
             background: #111;
@@ -615,36 +605,19 @@
 
     <!-- Brands Section -->
     <section id="brands">
-        <div class="section-header">Brands</div>
         <div class="brands-panel">
-            <div class="brand-card">
-                <img src="IMAGE/BRANDNIKE.png" class="brand-img" alt="Nike">
-                <div class="brand-info">
-                    <div class="brand-name">Nike</div>
-                    <button class="shop-brand-btn" onclick="goToBrand('Nike')">Shop Brand</button>
+                <div class="brand-card">
+                    <a class="brand-logo-link" href="product-list.html?brand=Nike"><img src="IMAGE/NIKELOGO.png" class="brand-logo brand-logo--nike" alt="Nike"></a>
                 </div>
-            </div>
-            <div class="brand-card">
-                <img src="IMAGE/BRANDADIDAS.png" class="brand-img" alt="Adidas">
-                <div class="brand-info">
-                    <div class="brand-name">Adidas</div>
-                    <button class="shop-brand-btn" onclick="goToBrand('Adidas')">Shop Brand</button>
+                <div class="brand-card">
+                    <a class="brand-logo-link" href="product-list.html?brand=Adidas"><img src="IMAGE/ADIDASLOGO.png" class="brand-logo brand-logo--adidas" alt="Adidas"></a>
                 </div>
-            </div>
-            <div class="brand-card">
-                <img src="IMAGE/BRANDCLOUDTILT.png" class="brand-img" alt="Cloudtilt">
-                <div class="brand-info">
-                    <div class="brand-name">Cloudtilt</div>
-                    <button class="shop-brand-btn" onclick="goToBrand('Cloudtilt')">Shop Brand</button>
+                <div class="brand-card">
+                    <a class="brand-logo-link" href="product-list.html?brand=Cloudtilt"><img src="IMAGE/CLOUDTILTLOGO.png" class="brand-logo" alt="Cloudtilt"></a>
                 </div>
-            </div>
-            <div class="brand-card">
-                <img src="IMAGE/BRANDNEWBALANCE.png" class="brand-img" alt="New Balance">
-                <div class="brand-info">
-                    <div class="brand-name">New Balance</div>
-                    <button class="shop-brand-btn" onclick="goToBrand('New Balance')">Shop Brand</button>
+                <div class="brand-card">
+                    <a class="brand-logo-link" href="product-list.html?brand=New%20Balance"><img src="IMAGE/NEWBALANCELOGO.png" class="brand-logo brand-logo--newbalance" alt="New Balance"></a>
                 </div>
-            </div>
         </div>
     </section>
 

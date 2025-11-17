@@ -375,7 +375,7 @@
                     if(!delLabel && row.deliveryCode){
                         if(row.deliveryCode === 'personal') delLabel = 'Personal Delivery';
                         else if(row.deliveryCode === 'lalamove') delLabel = 'Lalamove';
-                        else if(row.deliveryCode === 'nationwide') delLabel = 'Nationwide Delivery';
+                        else if(row.deliveryCode === 'jnt') delLabel = 'J&T Express';
                     }
                     document.getElementById('adminOrderModalDelivery').textContent = delLabel ? ('Delivery: ' + delLabel) : '';
                 document.getElementById('adminOrderModalImg').src = 'IMAGE/NIKE1.png';

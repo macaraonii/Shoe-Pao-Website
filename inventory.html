@@ -32,9 +32,17 @@
     .search-input{flex:1;padding:10px 14px;border:1px solid #e6e6e6;border-radius:8px;font-family:'Poppins',Arial,sans-serif}
     .filter-btn{padding:8px 12px;border-radius:18px;border:1px solid #ddd;background:#fff;cursor:pointer}
     .inventory-table{width:100%;border-collapse:collapse;font-family:'Poppins',Arial,sans-serif}
-    .inventory-table th{background:transparent;padding:14px 12px;text-align:left;color:#444;border-bottom:1px solid #eee}
-    .inventory-table td{padding:10px 12px;border-bottom:1px solid #fafafa;color:#333}
-    .size-col{width:48px;text-align:center}
+    /* Show vertical and horizontal grid lines between cells */
+    .inventory-table th, .inventory-table td{border:1px solid #e8e8e8}
+    /* Remove internal vertical lines for the top Size Stock group row; keep only a bottom border */
+    .inventory-table thead tr.group-row th{border:none;padding:10px 8px}
+    .inventory-table thead tr.group-row th[colspan]{border-bottom:1px solid #e8e8e8}
+    /* Header row alignment tweaks: keep group label centered and size numbers aligned with columns */
+    .inventory-table th{background:transparent;padding:10px 8px;text-align:left;color:#444;vertical-align:middle}
+    .inventory-table td{padding:8px 10px;color:#333}
+    .size-col{width:48px;text-align:center;padding:8px 6px}
+    /* make the Size Stock label slightly bolder and centered within its colspan */
+    .size-stock-label{display:block;text-align:center;font-weight:700;color:#666;margin-bottom:6px}
     .actions-col{white-space:nowrap}
     .view-archive-row{margin-top:18px;display:flex;justify-content:space-between;align-items:center}
     .btn-black{background:#222;color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
@@ -77,26 +85,32 @@
             <div style="overflow:auto;">
                 <table class="inventory-table" id="inventoryTable">
                     <thead>
+                        <!-- top group row: Size Stock sits above the size number headers; other columns left blank to keep main headers aligned -->
+                        <tr class="group-row">
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th colspan="10" style="text-align:center"><span class="size-stock-label">Size Stock</span></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        <!-- main header row: all column names including size numbers are on the same line -->
                         <tr>
                             <th>Product ID</th>
                             <th>Product Name</th>
                             <th>Brand</th>
                             <th>Color</th>
-                            <th colspan="10" style="text-align:center">
-                                <span class="size-stock-label">Size Stock</span>
-                                <div style="display:flex;gap:10px;justify-content:center">
-                                    <span class="small-muted">36</span>
-                                    <span class="small-muted">37</span>
-                                    <span class="small-muted">38</span>
-                                    <span class="small-muted">39</span>
-                                    <span class="small-muted">40</span>
-                                    <span class="small-muted">41</span>
-                                    <span class="small-muted">42</span>
-                                    <span class="small-muted">43</span>
-                                    <span class="small-muted">44</span>
-                                    <span class="small-muted">45</span>
-                                </div>
-                            </th>
+                            <th class="size-col">36</th>
+                            <th class="size-col">37</th>
+                            <th class="size-col">38</th>
+                            <th class="size-col">39</th>
+                            <th class="size-col">40</th>
+                            <th class="size-col">41</th>
+                            <th class="size-col">42</th>
+                            <th class="size-col">43</th>
+                            <th class="size-col">44</th>
+                            <th class="size-col">45</th>
                             <th>Price</th>
                             <th>Actions</th>
                         </tr>

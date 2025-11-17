@@ -94,6 +94,48 @@
             </div>
         </div>
     </div>
+    
+            <!-- Refund Confirmation Modal -->
+            <div id="refundModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(34,34,34,0.45);z-index:10001;align-items:center;justify-content:center;">
+                <div style="background:#fff;border-radius:12px;padding:20px;max-width:640px;width:94%;box-shadow:0 12px 40px rgba(0,0,0,0.18);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <div style="font-weight:700;font-size:1.05rem;">Can you give a reason for your refund?</div>
+                        <button onclick="closeRefundModal()" style="background:none;border:none;cursor:pointer;"><img src="IMAGE/X.png" alt="Close" style="width:20px;height:20px;"></button>
+                    </div>
+                    <div style="margin-bottom:8px;color:#444;">You may upload an image as proof of the issue (optional). Please provide a short explanation to continue.</div>
+                    <div style="display:flex;gap:12px;align-items:flex-start;flex-direction:column;">
+                        <!-- Styled upload box (click to open file dialog) -->
+                        <div id="refundUpload" style="width:100%;border:1px solid #eee;border-radius:12px;padding:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff;min-height:60px;box-sizing:border-box;">
+                            <div id="refundUploadInner" style="text-align:center;color:#444;font-family:'Poppins',Arial,sans-serif;width:100%;">
+                                <img id="refundPreview" src="" alt="" style="max-width:100%;max-height:160px;display:none;border-radius:8px;margin-bottom:8px;object-fit:contain;" />
+                                <div id="refundUploadPlaceholder" style="font-size:0.98rem;color:#444;padding:6px 8px;">+ Upload Proof of Payment</div>
+                            </div>
+                        </div>
+                        <input id="refundProof" type="file" accept="image/*" style="display:none;" />
+                        <textarea id="refundReason" placeholder="Type your explanation here..." style="width:100%;min-height:110px;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:0.98rem;font-family:'Poppins',Arial,sans-serif;margin-top:8px;"></textarea>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+                        <button onclick="closeRefundModal()" style="background:#fff;border:1px solid #ccc;padding:8px 14px;border-radius:10px;cursor:pointer;">Cancel</button>
+                        <button id="confirmRefundBtn" onclick="confirmRefund()" disabled style="background:#b71c1c;color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;">Refund</button>
+                    </div>
+                </div>
+            </div>
+    
+    <!-- Cancel Confirmation Modal -->
+    <div id="cancelModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(34,34,34,0.45);z-index:10000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:12px;padding:20px;max-width:560px;width:92%;box-shadow:0 12px 40px rgba(0,0,0,0.18);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="font-weight:700;font-size:1.05rem;">Can you give an explanation for your order cancellation?</div>
+                <button onclick="closeCancelModal()" style="background:none;border:none;cursor:pointer;"><img src="IMAGE/X.png" alt="Close" style="width:20px;height:20px;"></button>
+            </div>
+            <div style="margin-bottom:8px;color:#444;">Please tell us why you want to cancel this order. This field is required to confirm cancellation.</div>
+            <textarea id="cancelReason" placeholder="Type your explanation here..." style="width:100%;min-height:110px;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:0.98rem;font-family:'Poppins',Arial,sans-serif;"></textarea>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+                <button onclick="closeCancelModal()" style="background:#fff;border:1px solid #ccc;padding:8px 14px;border-radius:10px;cursor:pointer;">Cancel</button>
+                <button id="confirmCancelBtn" onclick="confirmCancel()" disabled style="background:#b71c1c;color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <script>
     // Render order cards from localStorage.cart (client-side orders page)
@@ -129,8 +171,8 @@
                     <div class="order-card-code-row">Order ${order.id}</div>
                     <div class="order-card-btn-row">
                         <button class="order-card-btn view-btn" onclick="openOrderModal(${idx})">View Order</button>
-                        <button class="order-card-btn cancel-btn" onclick="removeOrder(${idx})">Cancel</button>
-                        <button class="order-card-btn refund-btn" onclick="removeOrder(${idx})">Refund</button>
+                        <button class="order-card-btn cancel-btn" onclick="requestCancelOrder(${idx})">Cancel</button>
+                        <button class="order-card-btn refund-btn" onclick="requestRefundOrder(${idx})">Refund</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -173,6 +215,119 @@
             renderOrders(); closeOrderModal();
         }
 
+    // Cancellation flow: request explanation before marking cancelled
+    var _pendingCancelIndex = null;
+    // Refund flow
+    var _pendingRefundIndex = null;
+        // Expose these helpers on `window` so inline onclick handlers can call them
+        window.requestCancelOrder = function(idx){
+            _pendingCancelIndex = idx;
+            var taEl = document.getElementById('cancelReason');
+            if(taEl) taEl.value = '';
+            var btn = document.getElementById('confirmCancelBtn'); if(btn) btn.disabled = true;
+            var overlay = document.getElementById('cancelModalOverlay');
+            if(overlay) overlay.style.display = 'flex';
+            setTimeout(function(){ var el = document.getElementById('cancelReason'); if(el) el.focus(); }, 120);
+        }
+
+        window.closeCancelModal = function(){
+            var overlay = document.getElementById('cancelModalOverlay');
+            if(overlay) overlay.style.display = 'none';
+            _pendingCancelIndex = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            var ta = document.getElementById('cancelReason');
+            if(ta){
+                ta.addEventListener('input', function(){
+                    var btn = document.getElementById('confirmCancelBtn');
+                    if(btn) btn.disabled = !(ta.value && ta.value.trim().length > 2);
+                });
+            }
+            var rta = document.getElementById('refundReason');
+            if(rta){
+                rta.addEventListener('input', function(){
+                    var btn = document.getElementById('confirmRefundBtn');
+                    if(btn) btn.disabled = !(rta.value && rta.value.trim().length > 2);
+                });
+            }
+            // Setup refund upload click / preview behavior
+            var refundUpload = document.getElementById('refundUpload');
+            var refundInput = document.getElementById('refundProof');
+            var refundPreview = document.getElementById('refundPreview');
+            var refundPlaceholder = document.getElementById('refundUploadPlaceholder');
+            if(refundUpload && refundInput){
+                refundUpload.addEventListener('click', function(){ refundInput.click(); });
+                refundInput.addEventListener('change', function(e){
+                    var file = (refundInput.files && refundInput.files[0]) || null;
+                    if(!file){ refundPreview.style.display = 'none'; refundPlaceholder.style.display = 'block'; return; }
+                    if(file.type && file.type.indexOf('image') === 0){
+                        var reader = new FileReader();
+                        reader.onload = function(ev){
+                            refundPreview.src = ev.target.result;
+                            refundPreview.style.display = 'block';
+                            refundPlaceholder.style.display = 'none';
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // not image: just show filename
+                        refundPreview.style.display = 'none';
+                        refundPlaceholder.textContent = file.name || 'Selected file';
+                    }
+                });
+            }
+        });
+
+        window.confirmCancel = function(){
+            var reason = (document.getElementById('cancelReason') || {}).value || '';
+            if(!reason || !reason.trim()) return; // require an explanation
+            var orders = JSON.parse(localStorage.getItem('orders')||'[]');
+            var idx = _pendingCancelIndex;
+            if(!orders || !orders[idx]){
+                window.closeCancelModal && window.closeCancelModal();
+                return;
+            }
+            // Remove the order from the array
+            orders.splice(idx, 1);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            window.closeCancelModal && window.closeCancelModal();
+            renderOrders();
+            // If order modal is open for this order, close it
+            try{ var overlay = document.getElementById('orderModalOverlay'); if(overlay && overlay.style.display==='flex'){ closeOrderModal(); } }catch(e){}
+        }
+
+        // Refund modal helpers
+        window.requestRefundOrder = function(idx){
+            _pendingRefundIndex = idx;
+            var proofEl = document.getElementById('refundProof'); if(proofEl) proofEl.value = '';
+            var ta = document.getElementById('refundReason'); if(ta) ta.value = '';
+            var btn = document.getElementById('confirmRefundBtn'); if(btn) btn.disabled = true;
+            var overlay = document.getElementById('refundModalOverlay'); if(overlay) overlay.style.display = 'flex';
+            setTimeout(function(){ var el = document.getElementById('refundReason'); if(el) el.focus(); }, 120);
+        }
+
+        window.closeRefundModal = function(){
+            var overlay = document.getElementById('refundModalOverlay'); if(overlay) overlay.style.display = 'none';
+            _pendingRefundIndex = null;
+        }
+
+        window.confirmRefund = function(){
+            var reason = (document.getElementById('refundReason') || {}).value || '';
+            if(!reason || !reason.trim()) return; // require explanation
+            var orders = JSON.parse(localStorage.getItem('orders')||'[]');
+            var idx = _pendingRefundIndex;
+            if(!orders || !orders[idx]){
+                window.closeRefundModal && window.closeRefundModal();
+                return;
+            }
+            // For now: remove the order upon refund confirmation
+            orders.splice(idx, 1);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            window.closeRefundModal && window.closeRefundModal();
+            renderOrders();
+            try{ var overlay = document.getElementById('orderModalOverlay'); if(overlay && overlay.style.display==='flex'){ closeOrderModal(); } }catch(e){}
+        }
+
         window.openOrderModal = function(idx){
             var orders = JSON.parse(localStorage.getItem('orders')||'[]');
             var order = orders[idx];
@@ -199,7 +354,7 @@
             if(!deliveryLabel && order.deliveryCode){
                 if(order.deliveryCode === 'personal') deliveryLabel = 'Personal Delivery';
                 else if(order.deliveryCode === 'lalamove') deliveryLabel = 'Lalamove';
-                else if(order.deliveryCode === 'nationwide') deliveryLabel = 'Nationwide Delivery';
+                else if(order.deliveryCode === 'jnt') deliveryLabel = 'J&T Express';
             }
             document.getElementById('orderModalDelivery').textContent = deliveryLabel ? ('Delivery: ' + deliveryLabel) : '';
             document.getElementById('orderModalImg').src = (order.items[0] && order.items[0].image) || 'IMAGE/NIKE1.png';

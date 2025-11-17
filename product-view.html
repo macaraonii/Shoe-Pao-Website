@@ -18,8 +18,8 @@
             padding-right: 32px !important;
         }
         .productview-main {
-            padding-left: 32px;
-            padding-right: 32px;
+            padding-left: 12px; /* reduced left padding to move content closer to left edge */
+            padding-right: 12px;
         }
         .search-input {
             border: none !important;
@@ -51,8 +51,10 @@
             flex-direction: row;
             gap: 48px;
             max-width: 1200px;
-            margin: 48px auto 0 auto;
+            /* align container to the left with a small 12px gap from viewport edge */
+            margin: 48px 0 0 12px;
             min-height: 480px;
+            position: relative; /* needed so the sizing guide can be positioned relative to this container */
         }
         .productview-left {
             display: flex;
@@ -115,6 +117,7 @@
         .productview-availability {
             font-size: 1.05rem;
             color: #222;
+            transform: translateX(-10px); /* slightly nudge availability left */
         }
         .productview-availability b {
             font-weight: 600;
@@ -133,6 +136,51 @@
             display: flex;
             gap: 12px;
             margin-bottom: 8px;
+        }
+        .productview-size-conversion {
+            font-size: 0.98rem;
+            color: #555;
+            margin-top: 6px;
+        }
+        .productview-size-conversion b {
+            color: #222;
+            font-weight: 600;
+        }
+        .productview-size-dropdown {
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #e6e6e6;
+            background: #fff;
+            font-size: 1.05rem;
+            color: #222;
+            width: 220px;
+        }
+        .productview-size-stock {
+            font-size: 0.95rem;
+            color: #666;
+            margin-top: 6px;
+        }
+    /* right-side sizing guide panel (moved left and enlarged on wide screens) */
+    /* Shifted left (from the right edge) and increased width/font so it appears larger
+       while still remaining part of the page flow. Kept no shadow and slightly larger padding. */
+    #rightSizingGuide { position: absolute; right: 220px; top: calc(360px - 10vh); width: 420px; background: #fff; border: 1px solid #d0d0d0; border-radius: 14px; box-shadow: none; padding: 16px; z-index: 1000; font-family: 'Poppins', Arial, sans-serif; max-height: calc(100vh - 160px); overflow: auto }
+    /* header fills the container edges and has no bottom radius so no corners show */
+    #rightSizingGuide .sg-title { display: block; margin: -16px -16px 12px -16px; padding: 18px 20px; background: #222; color: #fff; font-weight: 700; text-transform: uppercase; font-size: 14px; border-radius: 14px 14px 0 0; box-sizing: border-box }
+    #rightSizingGuide table { width: 100%; border-collapse: collapse; font-size: 14px }
+    #rightSizingGuide td, #rightSizingGuide th { padding: 8px 10px; text-align: center; color: #222 }
+    #rightSizingGuide th { color: #666; font-weight: 700; font-size: 13px }
+    /* sizing guide row highlight */
+    #rightSizingGuide .sg-row { cursor: default }
+    #rightSizingGuide .sg-selected { background: #f6f0ea; border-radius: 4px }
+    @media (max-width:1100px){ #rightSizingGuide{display:none} }
+        .productview-size-row .input-label {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            font-size: 1.05rem;
+            color: #222;
+            padding: 8px 6px;
+            height: 42px;
         }
         .productview-size-btn {
             background: #eee;
@@ -191,6 +239,27 @@
             /* Deep red: #990000 */
             filter: invert(13%) sepia(99%) saturate(7492%) hue-rotate(357deg) brightness(90%) contrast(110%);
         }
+        /* Review icon button (placed to the right of wishlist) */
+        .productview-review-icon {
+            width: 66px;
+            height: 66px;
+            background: none !important;
+            border: none !important;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-shadow: none !important;
+            outline: none !important;
+            transition: filter 0.18s;
+        }
+        .productview-review-icon:hover img {
+            filter: invert(13%) sepia(99%) saturate(7492%) hue-rotate(357deg) brightness(90%) contrast(110%);
+        }
+        /* shared icon sizing so wishlist and review match exactly */
+        .productview-icon { width: 66px; height: 66px; display: flex; align-items: center; justify-content: center; padding: 0; background: none !important; border: none !important }
+        .productview-icon img { width: 54px; height: 54px; object-fit: contain }
         .wishlist-popup {
             position: fixed;
             left: 50%;
@@ -214,10 +283,10 @@
             pointer-events: auto;
         }
         .productview-divider {
-            width: 100%;
+            width: 100%; /* restored full width for Description header divider */
             height: 2px;
             background: #eee;
-            margin: 18px 0 12px 0;
+            margin: 18px 0 12px 0; /* align with normal flow of the right column */
         }
         .productview-desc-label {
             font-size: 1.08rem;
@@ -1269,15 +1338,26 @@
             <div class="productview-caption">Delivery/shipping calculated at checkout.</div>
             <div class="productview-size-label">Select Size</div>
             <div class="productview-size-row">
-                <button class="productview-size-btn" onclick="selectSize(this)">41 EU</button>
-                <button class="productview-size-btn" onclick="selectSize(this)">42 EU</button>
-                <button class="productview-size-btn" onclick="selectSize(this)">43 EU</button>
-                <button class="productview-size-btn" onclick="selectSize(this)">44 EU</button>
-                <button class="productview-size-btn" onclick="selectSize(this)">45 EU</button>
+                <select id="sizeSelect" class="productview-size-dropdown" onchange="selectSize(this)">
+                    <option value="">Select size (EU)</option>
+                    <option value="36">36 EU</option>
+                    <option value="37">37 EU</option>
+                    <option value="38">38 EU</option>
+                    <option value="39">39 EU</option>
+                    <option value="40">40 EU</option>
+                    <option value="41">41 EU</option>
+                    <option value="42">42 EU</option>
+                    <option value="43">43 EU</option>
+                    <option value="44">44 EU</option>
+                    <option value="45">45 EU</option>
+                </select>
             </div>
+            <div class="productview-size-conversion" id="sizeConversion">Select a size to see the US equivalent.</div>
+            <div id="sizeStock" class="productview-size-stock"></div>
             <div class="productview-action-row">
                 <button class="productview-cart-btn">Add to Cart</button>
-                <button class="productview-wishlist" id="wishlistBtn" title="Add to Wishlist"><img src="IMAGE/WISHLISTICON.png" alt="Wishlist" style="width:54px;height:54px;object-fit:contain;"></button>
+                    <button class="productview-wishlist productview-icon" id="wishlistBtn" title="Add to Wishlist"><img src="IMAGE/WISHLISTICON.png" alt="Wishlist" style="width:54px;height:54px;object-fit:contain;"></button>
+                    <button class="productview-review-icon productview-icon" id="reviewBtn" title="Write a Review" onclick="scrollToReviews()"><img src="IMAGE/REVIEWICON.jpg" alt="Review" style="width:54px;height:54px;object-fit:contain;"></button>
                 <div id="wishlistPopup" class="wishlist-popup">Added to Wishlist!</div>
             </div>
             <div class="productview-divider"></div>
@@ -1288,16 +1368,14 @@
                 Sizes: 41 42 43 44 45 / 8 8.5 9.5 10 11 US<br>
                 <span style="font-weight:600;">MENS</span>
             </div>
+            
         </div>
     </div>
     <div class="productview-ar-caption">
         Virtually try your preferred shoes to see<br>how it looks on you!
     </div>
     <button class="productview-ar-btn" onclick="openARModal()">AR Try-On Shoes</button>
-    <div class="productview-section-divider"></div>
-    <div class="productview-sizing-header">Sizing Guide</div>
-    <img src="IMAGE/NIKESIZES.png" class="productview-sizing-img" alt="Nike Sizing Guide">
-    <div class="productview-section-divider"></div>
+    
     <div class="productview-reviews-header">Customer Reviews</div>
     <div class="productview-reviews-row">
         <div class="productview-reviews-left">
@@ -1428,6 +1506,54 @@ On page.</div>
         <button id="checkoutBtn" class="cart-checkout-btn">Checkout</button>
     </aside>
 
+    <!-- Right-side sizing guide (fixed on wide screens) -->
+    <aside id="rightSizingGuide" aria-hidden="false">
+        <div class="sg-title">Sizing Guide</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <div style="flex:1">
+                <div style="font-weight:700;font-size:12px;color:#444;margin-bottom:6px;">Mens</div>
+                <table>
+                    <thead>
+                        <tr><th>EU</th><th>US</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="sg-row" data-eu="36"><td>36</td><td>5</td></tr>
+                        <tr class="sg-row" data-eu="37"><td>37</td><td>5.5</td></tr>
+                        <tr class="sg-row" data-eu="38"><td>38</td><td>6.5</td></tr>
+                        <tr class="sg-row" data-eu="39"><td>39</td><td>7</td></tr>
+                        <tr class="sg-row" data-eu="40"><td>40</td><td>7.5</td></tr>
+                        <tr class="sg-row" data-eu="41"><td>41</td><td>8</td></tr>
+                        <tr class="sg-row" data-eu="42"><td>42</td><td>8.5</td></tr>
+                        <tr class="sg-row" data-eu="43"><td>43</td><td>9.5</td></tr>
+                        <tr class="sg-row" data-eu="44"><td>44</td><td>10</td></tr>
+                        <tr class="sg-row" data-eu="45"><td>45</td><td>11</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="flex:1">
+                <div style="font-weight:700;font-size:12px;color:#444;margin-bottom:6px;">Womens</div>
+                <table>
+                    <thead>
+                        <tr><th>EU</th><th>US</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="sg-row" data-eu="36"><td>36</td><td>6</td></tr>
+                        <tr class="sg-row" data-eu="37"><td>37</td><td>6.5</td></tr>
+                        <tr class="sg-row" data-eu="38"><td>38</td><td>7.5</td></tr>
+                        <tr class="sg-row" data-eu="39"><td>39</td><td>8</td></tr>
+                        <tr class="sg-row" data-eu="40"><td>40</td><td>8.5</td></tr>
+                        <tr class="sg-row" data-eu="41"><td>41</td><td>9</td></tr>
+                        <tr class="sg-row" data-eu="42"><td>42</td><td>9.5</td></tr>
+                        <tr class="sg-row" data-eu="43"><td>43</td><td>10.5</td></tr>
+                        <tr class="sg-row" data-eu="44"><td>44</td><td>11</td></tr>
+                        <tr class="sg-row" data-eu="45"><td>45</td><td>12</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div style="font-size:11px;color:#666;margin-top:8px;">Note: Women's sizes are approximate conversions and may vary by brand.</div>
+    </aside>
+
     <script>
     // Wishlist logic
     function showWishlistPopup(msg) {
@@ -1499,15 +1625,122 @@ On page.</div>
             document.getElementById('searchInput').focus();
         }
     }
+    
+    // Smooth-scroll down to the reviews header on the product page
+    function scrollToReviews() {
+        try {
+            var el = document.querySelector('.productview-reviews-header');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // attempt to focus for accessibility
+                try { el.setAttribute('tabindex', '-1'); el.focus(); } catch(e){}
+                return;
+            }
+            // fallback to reviews row
+            var alt = document.querySelector('.productview-reviews-row');
+            if (alt) alt.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {
+            // no-op
+        }
+    }
+    // no nav sizing guide handlers (sizing guide moved inline)
     function searchKeyDown(e) {
         if (e.key === 'Enter') {
             window.location.href = 'product-list.html?search=' + encodeURIComponent(e.target.value);
         }
     }
-    // Size selection
-    function selectSize(btn) {
-        document.querySelectorAll('.productview-size-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
+    // Size selection (works for select element or fallback elements)
+    function selectSize(el) {
+        try {
+            var eu = null;
+            // if a select was passed
+            if (el && el.tagName && el.tagName.toLowerCase() === 'select') {
+                eu = el.value || null;
+            } else if (el && (el.textContent || el.innerText)) {
+                var txt = (el.textContent || el.innerText || '').trim();
+                var m = txt.match(/\d+(?:\.\d+)?/);
+                eu = m ? m[0] : null;
+            }
+
+            var conv = {
+                '36': '5',
+                '37': '5.5',
+                '38': '6.5',
+                '39': '7',
+                '40': '7.5',
+                '41': '8',
+                '42': '8.5',
+                '43': '9.5',
+                '44': '10',
+                '45': '11'
+            };
+
+            var elConv = document.getElementById('sizeConversion');
+            var elStock = document.getElementById('sizeStock');
+
+            if (elConv) {
+                if (eu && conv[eu]) {
+                    elConv.innerHTML = 'EU <b>' + eu + '</b> = US <b>' + conv[eu] + '</b>';
+                } else if (eu) {
+                    elConv.textContent = 'EU ' + eu + ' — US size not available';
+                } else {
+                    elConv.textContent = 'Select a size to see the US equivalent.';
+                }
+            }
+
+            // Lookup inventory for available quantity for this product and size
+            if (elStock) {
+                try {
+                    var inv = JSON.parse(localStorage.getItem('inventory') || '[]');
+                    var title = (localStorage.getItem('productTitle') || (document.getElementById('productTitle') && document.getElementById('productTitle').textContent) || '').trim();
+                    var brand = (localStorage.getItem('productBrand') || (document.getElementById('productBrand') && document.getElementById('productBrand').textContent) || '').trim();
+                    var found = null;
+                    if (Array.isArray(inv) && inv.length) {
+                        // try exact name match first
+                        found = inv.find(function(i){ return (i.name||'').toString().trim() === title; });
+                        if(!found) {
+                            // try contains title
+                            found = inv.find(function(i){ return title && (i.name||'').toString().toLowerCase().indexOf(title.toLowerCase()) !== -1; });
+                        }
+                        if(!found && brand) {
+                            // fallback: match brand
+                            found = inv.find(function(i){ return (i.brand||'').toString().toLowerCase() === brand.toLowerCase(); });
+                        }
+                    }
+
+                    if (found && eu) {
+                        var qty = (found.sizes && (found.sizes[eu] !== undefined)) ? Number(found.sizes[eu]) : null;
+                        if (qty === null) {
+                            elStock.textContent = 'Stock: not available for this size';
+                        } else if (qty <= 0) {
+                            elStock.textContent = 'Stock: Out of stock';
+                        } else {
+                            elStock.textContent = 'Stock: ' + qty + ' available';
+                        }
+                    } else if (!eu) {
+                        elStock.textContent = '';
+                    } else {
+                        elStock.textContent = 'Stock: inventory data not found';
+                    }
+                } catch (e) {
+                    elStock.textContent = '';
+                }
+            }
+
+            // Highlight matching size row(s) in the right-side sizing guide (if present)
+            try {
+                // clear previous selection
+                document.querySelectorAll('#rightSizingGuide .sg-selected').forEach(function(r){ r.classList.remove('sg-selected'); });
+                if (eu) {
+                    document.querySelectorAll('#rightSizingGuide .sg-row[data-eu="' + eu + '"]').forEach(function(r){ r.classList.add('sg-selected'); });
+                }
+            } catch (xx) {
+                // ignore
+            }
+
+        } catch (e) {
+            // silent
+        }
     }
 
     // Load product data from localStorage
@@ -1526,6 +1759,15 @@ On page.</div>
         if (title) {
             document.getElementById('productDesc').innerHTML = title + '<br>With Free Socks<br>Sizes: 41 42 43 44 45 / 8 8.5 9.5 10 11 US<br><span style="font-weight:600;">MENS</span>';
         }
+    });
+    // If inventory is changed in another tab or by admin, refresh displayed stock for selected size
+    window.addEventListener('storage', function(e){
+        try {
+            if (e.key === 'inventory') {
+                var sel = document.getElementById('sizeSelect');
+                if (sel) selectSize(sel);
+            }
+        } catch (ex) { }
     });
     </script>
 
@@ -1629,7 +1871,8 @@ On page.</div>
                 brand.textContent = item.brand;
                 const size = document.createElement('div');
                 size.className = 'cart-item-size';
-                size.textContent = 'Size: ' + (item.size || '');
+                // Display only the selected EU size number (e.g. '41')
+                size.textContent = item.size ? item.size : '';
 
                 const qtyControls = document.createElement('div');
                 qtyControls.className = 'cart-quantity-controls';
@@ -1723,13 +1966,32 @@ On page.</div>
                 btn.onclick = function(e) {
                     const idx = parseInt(btn.getAttribute('data-index'), 10);
                     if (!isNaN(idx) && cart[idx]) {
-                        if (typeof cart[idx].qty === 'number') {
-                            cart[idx].qty++;
-                        } else if (typeof cart[idx].quantity === 'number') {
-                            cart[idx].quantity++;
+                        try {
+                            var item = cart[idx];
+                            var current = (typeof item.qty === 'number') ? item.qty : (typeof item.quantity === 'number' ? item.quantity : 1);
+                            var maxAllowed = (window.getMaxAllowedForProduct && typeof window.getMaxAllowedForProduct === 'function') ? window.getMaxAllowedForProduct(item) : 3;
+                            if (current >= maxAllowed) {
+                                // show inline small message
+                                var cStockEl = document.getElementById('sizeStock');
+                                if (cStockEl) { cStockEl.style.color = '#b71c1c'; cStockEl.textContent = 'Limit reached: you can only buy up to ' + maxAllowed + ' of this size.'; }
+                                else alert('Limit reached: you can only buy up to ' + maxAllowed + ' of this size.');
+                                return;
+                            }
+                            // increment
+                            if (typeof cart[idx].qty === 'number') {
+                                cart[idx].qty++;
+                            } else if (typeof cart[idx].quantity === 'number') {
+                                cart[idx].quantity++;
+                            } else {
+                                cart[idx].qty = current + 1;
+                            }
+                            saveCartToLocalStorage();
+                            renderCart();
+                        } catch (e) { /* fallback to previous behavior */
+                            if (typeof cart[idx].qty === 'number') { cart[idx].qty++; }
+                            else if (typeof cart[idx].quantity === 'number') { cart[idx].quantity++; }
+                            saveCartToLocalStorage(); renderCart();
                         }
-                        saveCartToLocalStorage();
-                        renderCart();
                     }
                 };
             });
@@ -1769,29 +2031,58 @@ On page.</div>
             const addToCartBtn = document.querySelector('.productview-cart-btn');
             if (addToCartBtn) {
                 addToCartBtn.addEventListener('click', function(e){
+                    // Read selected EU size from the dropdown (if present)
+                    var sizeSelect = document.getElementById('sizeSelect');
+                    var selectedEU = '';
+                    if (sizeSelect) selectedEU = (sizeSelect.value || '').toString().trim();
+
+                    // If no size selected, prevent adding and show an inline hint
+                    var elStock = document.getElementById('sizeStock');
+                    if (!selectedEU) {
+                        if (elStock) {
+                            elStock.style.color = '#b71c1c';
+                            elStock.textContent = 'Please select a size before adding to cart.';
+                        } else {
+                            alert('Please select a size before adding to cart.');
+                        }
+                        return;
+                    } else {
+                        // clear any previous error message
+                        if (elStock) { elStock.style.color = ''; elStock.textContent = ''; }
+                    }
+
                     const title = (document.getElementById('productTitle') && document.getElementById('productTitle').textContent) || '';
                     const brand = (document.getElementById('productBrand') && document.getElementById('productBrand').textContent) || '';
                     const priceText = (document.getElementById('productPrice') && document.getElementById('productPrice').textContent) || '';
                     const priceNum = parsePriceToNumber(priceText);
                     const image = (document.getElementById('mainShoeImg') && document.getElementById('mainShoeImg').src) || '';
-                    const selBtn = document.querySelector('.productview-size-btn.selected');
-                    const size = selBtn ? selBtn.textContent.trim() : (document.querySelector('.productview-size-btn') ? document.querySelector('.productview-size-btn').textContent.trim() : '');
+
+                    // Persist selected EU size number (e.g. '41') in cart item
                     const prod = {
                         title: title,
                         brand: brand,
                         price: priceNum,
-                        size: size,
+                        size: selectedEU,
                         image: image,
                         qty: 1
                     };
                     if (window.addToCart) {
-                        window.addToCart(prod);
+                        var res = window.addToCart(prod);
+                        if (res && res.success) {
+                            if (typeof renderCart === 'function') {
+                                cart = window.getCart ? window.getCart() : [];
+                                renderCart();
+                            }
+                            openCartSidebar();
+                        } else {
+                            // show inline message when add failed
+                            var msg = 'Unable to add to cart.';
+                            if (res && res.reason === 'out_of_stock') msg = 'This size is out of stock.';
+                            else if (res && res.reason === 'max_reached') msg = 'You can only add up to ' + (res.maxAllowed || 1) + ' of this size.';
+                            if (elStock) { elStock.style.color = '#b71c1c'; elStock.textContent = msg; }
+                            else alert(msg);
+                        }
                     }
-                    if (typeof renderCart === 'function') {
-                        cart = window.getCart ? window.getCart() : [];
-                        renderCart();
-                    }
-                    openCartSidebar();
                 });
             }
 

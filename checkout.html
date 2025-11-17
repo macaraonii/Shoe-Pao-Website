@@ -207,6 +207,46 @@
             gap: 12px;
             margin-bottom: 18px;
         }
+        /* QR modal styles */
+        .qr-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+        }
+        .qr-modal-overlay.show { display: flex; }
+        .qr-modal {
+            width: 920px;
+            max-width: calc(100vw - 48px);
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.28);
+            display: flex;
+            gap: 22px;
+            position: relative;
+        }
+        .qr-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .qr-modal-left { flex: 0 0 260px; display:flex;align-items:center;justify-content:center;padding:18px;border-right:1px solid #eee }
+        .qr-modal-left img { width:240px;height:240px;object-fit:contain }
+        .qr-modal-right { flex:1; display:flex;flex-direction:column; gap:12px }
+        .qr-modal-right h3 { margin:0;font-size:1.1rem }
+        .qr-modal-steps { font-size:0.98rem;color:#333;line-height:1.5 }
+        .qr-modal-steps ul { margin:8px 0 0 18px }
+        .qr-modal-actions { margin-top:auto; display:flex;justify-content:flex-end;gap:12px }
+        .qr-modal-complete { background:#111;color:#fff;border:none;border-radius:12px;padding:10px 18px;cursor:pointer }
+        .qr-modal-cancel { background:#fff;color:#111;border:1px solid #ccc;border-radius:12px;padding:8px 14px;cursor:pointer }
         .checkout-payment-option {
             background: #f5f5f5;
             border-radius: 18px;
@@ -423,29 +463,23 @@
             </div>
             <div class="checkout-divider"></div>
             <div class="checkout-delivery-method-title">Delivery method</div>
-            <div class="checkout-delivery-options">
-                <div class="checkout-delivery-option selected" data-code="personal" onclick="selectDeliveryMethod(this, 0)">
-                    <input type="radio" name="delivery" class="checkout-delivery-radio" checked value="personal">
-                    <div>
-                        <div class="checkout-delivery-label">Personal Delivery</div>
-                        <div class="checkout-delivery-desc">Hand delivered by our team. Est. Delivery Time: 1-2 days<br>Only available in Bacoor, Cavite.</div>
+            
+                <div class="checkout-delivery-options">
+                    <div class="checkout-delivery-option selected" data-code="personal" onclick="selectDeliveryMethod(this, 0)">
+                        <input type="radio" name="delivery" class="checkout-delivery-radio" checked value="personal">
+                        <div>
+                            <div class="checkout-delivery-label">Personal Delivery</div>
+                            <div class="checkout-delivery-desc">Hand delivered by our team. Est. Delivery Time: 1-2 days. Only available in Bacoor, Cavite.</div>
+                        </div>
                     </div>
+                        <div class="checkout-delivery-option" data-code="jnt" onclick="selectDeliveryMethod(this, 1)">
+                            <input type="radio" name="delivery" class="checkout-delivery-radio" value="jnt">
+                            <div>
+                                <div class="checkout-delivery-label">J&amp;T Express / JRS</div>
+                                <div class="checkout-delivery-desc">Delivered via J&amp;T Express or JRS. Delivery fee may vary by distance. Est. Delivery Time: 2-7 business days.</div>
+                            </div>
+                        </div>
                 </div>
-                <div class="checkout-delivery-option" data-code="lalamove" onclick="selectDeliveryMethod(this, 1)">
-                    <input type="radio" name="delivery" class="checkout-delivery-radio" value="lalamove">
-                    <div>
-                        <div class="checkout-delivery-label">Lalamove</div>
-                        <div class="checkout-delivery-desc">For nearby areas beyond our personal delivery range. Same-day delivery. Delivery fee may vary by distance.</div>
-                    </div>
-                </div>
-                <div class="checkout-delivery-option" data-code="nationwide" onclick="selectDeliveryMethod(this, 2)">
-                    <input type="radio" name="delivery" class="checkout-delivery-radio" value="nationwide">
-                    <div>
-                        <div class="checkout-delivery-label">Nationwide Delivery (J&T Express / JRS)</div>
-                        <div class="checkout-delivery-desc">For far provinces or areas outside Metro Manila. Delivery fee may vary by distance. Est. Delivery Time: 2-7 business days.</div>
-                    </div>
-                </div>
-            </div>
             <div class="checkout-divider"></div>
             <div class="checkout-payment-title">Payment Method</div>
             <div class="checkout-payment-subtitle">All transactions are secured.</div>
@@ -576,7 +610,88 @@
             var code = el.dataset && el.dataset.code ? el.dataset.code : (el.querySelector('input[type="radio"]').value || '');
             if(label) localStorage.setItem('checkoutPayment', label);
             if(code) localStorage.setItem('checkoutPaymentCode', code);
+            // If QR PH option selected, show the QR modal
+            if (code === 'qr_ph') {
+                try { showQRModal(); } catch (e) { /* ignore */ }
+            }
         }catch(e){}
+    }
+
+    // QR modal helpers
+    function showQRModal() {
+        var overlay = document.getElementById('qrModalOverlay');
+        if (!overlay) {
+            // create overlay dynamically if missing
+            overlay = document.createElement('div');
+            overlay.id = 'qrModalOverlay';
+            overlay.className = 'qr-modal-overlay';
+            overlay.innerHTML = `
+                <div class="qr-modal" role="dialog" aria-modal="true">
+                    <button class="qr-modal-close" aria-label="Close" onclick="closeQRModal()">✕</button>
+                    <div class="qr-modal-left"><img id="qrModalImg" src="" alt="QR Code"></div>
+                    <div class="qr-modal-right">
+                        <h3>Scan to Pay (QR PH)</h3>
+                        <div class="qr-modal-steps">
+                            <ol>
+                                <li>Scan the QR code to pay for the order.</li>
+                                <li>After completing the payment please take note of the following details:
+                                    <ul>
+                                        <li>Take a screenshot as proof of payment to be uploaded.</li>
+                                        <li>Copy the Reference Number and input it in the Reference Number text field found in the next page.</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="qr-modal-actions">
+                            <button class="qr-modal-complete" onclick="completeQRPayment()">Complete</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+        }
+        // generate QR image (simple generated payload)
+        var payload = 'SHOEPAO_PAYMENT:' + Date.now() + ':' + Math.floor(Math.random()*100000);
+        var qrImg = document.getElementById('qrModalImg');
+        if (qrImg) {
+            // clear first to force reload in some browsers
+            try { qrImg.src = ''; } catch(e) {}
+            // cache-bust using timestamp
+            var url = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(payload) + '&_=' + Date.now();
+            // attach a single retry and fallback on error
+            var tried = 0;
+            qrImg.onerror = function() {
+                tried++;
+                if (tried <= 1) {
+                    // retry once with a slightly different payload
+                    var retryPayload = payload + ':r' + Date.now();
+                    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(retryPayload) + '&_=' + Date.now();
+                    return;
+                }
+                // final fallback: show a small inline SVG indicating the QR couldn't load
+                var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="100%" height="100%" fill="#f5f5f5"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#666" font-size="14">QR unavailable</text></svg>';
+                qrImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+                qrImg.onerror = null;
+            };
+            // finally set src
+            qrImg.src = url;
+        }
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeQRModal() {
+        var overlay = document.getElementById('qrModalOverlay');
+        if (overlay) {
+            overlay.classList.remove('show');
+            // keep overlay in DOM to reuse
+        }
+        document.body.style.overflow = '';
+    }
+
+    function completeQRPayment() {
+        // mark QR complete (optional), close modal and proceed
+        localStorage.setItem('checkoutQRComplete', '1');
+        closeQRModal();
     }
     // Cart rendering
     function renderCheckoutCart() {
