@@ -203,6 +203,22 @@
         .profile-save-btn:hover {
             background: #b71c1c;
         }
+        .profile-signout-btn {
+            background: transparent;
+            color: #b71c1c;
+            border: 1.5px solid #b71c1c;
+            border-radius: 22px;
+            padding: 10px 0;
+            width: 120px;
+            font-size: 1.02rem;
+            font-family: 'Poppins', Arial, sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            margin: 8px auto 36px auto;
+            display: block;
+        }
+        .profile-signout-btn:hover { background: #b71c1c; color: #fff; }
         @media (max-width: 900px) {
             .profile-main {
                 max-width: 98vw;
@@ -275,7 +291,8 @@
             <input type="password" id="confirmPassword" class="profile-password-input">
             <span class="profile-password-toggle" onclick="togglePassword('confirmPassword', this)"><img src="IMAGE/ToggleHideButton.png" alt="Hide"> Hide</span>
         </div>
-        <button class="profile-save-btn" onclick="saveProfile()">Save</button>
+    <button class="profile-save-btn" onclick="saveProfile()">Save</button>
+    <button class="profile-signout-btn" id="signOutBtn" onclick="signOut()">Sign Out</button>
                 </div>
             </div>
             <footer class="footer-section">
@@ -397,6 +414,19 @@
             console.error('Could not save profile to localStorage', e);
             alert('Unable to save profile locally.');
         }
+    }
+
+    // Sign out: clear saved profile and redirect to login page
+    function signOut() {
+        try {
+            localStorage.removeItem('profile');
+        } catch (e) {
+            console.warn('Could not remove profile from localStorage', e);
+        }
+        // Optionally clear other session data if you want a full sign-out
+        // localStorage.removeItem('cart');
+        // localStorage.removeItem('checkoutPackaging');
+        window.location.href = 'index.html';
     }
     // Populate profile inputs from localStorage if available and auto-save on change
     document.addEventListener('DOMContentLoaded', function(){
