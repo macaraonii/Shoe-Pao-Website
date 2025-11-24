@@ -1997,8 +1997,9 @@ On page.</div>
                 if (pkgRow) {
                     pkgRow.style.display = (totals.packaging && totals.packaging > 0) ? '' : 'none';
                 }
+                // Cart modal should show only the shoes total (subtotal). Shipping/packaging handled at checkout.
                 var totalVal = document.getElementById('cartTotalValue');
-                if (totalVal) totalVal.textContent = formatPHP(totals.total);
+                if (totalVal) totalVal.textContent = formatPHP(totals.subtotal);
             } catch (e) { /* ignore any UI update errors */ }
 
             // attach events

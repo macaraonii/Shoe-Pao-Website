@@ -137,7 +137,15 @@ function renderCartSidebarUI(){
         // format currency simple helper
         function fmt(v){ try{ return new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(v); }catch(e){ return '₱'+Number(v||0).toFixed(2);} }
         // update subtotal
-        var elSubtotal = document.getElementById('cartSubtotal'); if(elSubtotal) elSubtotal.textContent = fmt(totals.subtotal);
+            // Remove/hide the subtotal row in the cart sidebar UI — we'll show a single Total row instead
+            try{
+                var elSubtotal = document.getElementById('cartSubtotal');
+                if(elSubtotal){
+                    // hide the entire row containing the subtotal (safest across templates)
+                    var subRow = elSubtotal.closest ? elSubtotal.closest('.cart-subtotal-row') : (elSubtotal.parentNode || null);
+                    if(subRow) subRow.style.display = 'none';
+                }
+            }catch(e){}
         // update packaging row/value
         var pkgRow = document.getElementById('cartPackagingRow');
         if(!pkgRow){
@@ -148,22 +156,46 @@ function renderCartSidebarUI(){
                 elSubtotal.parentNode.parentNode.insertBefore(pkgRow, elSubtotal.parentNode.nextSibling);
             }
         }
-        var pkgVal = document.getElementById('cartPackagingValue'); if(pkgVal) pkgVal.textContent = fmt(totals.packaging);
-        if(pkgRow){
-            if(totals.packaging > 0) {
-                pkgRow.style.display = '';
-                var expl = document.getElementById('cartPackagingExpl');
-                if(!expl){ expl = document.createElement('div'); expl.id='cartPackagingExpl'; expl.style.fontSize='0.9rem'; expl.style.color='#666'; expl.style.marginTop='4px'; pkgRow.appendChild(expl); }
-                var totalItems = 0; cart.forEach(function(it){ var q = (typeof it.qty==='number')?it.qty:((typeof it.quantity==='number')?it.quantity:1); totalItems += Number(q)||0; });
-                var pairs = Math.floor(totalItems/2);
-                expl.textContent = 'Packaging fee: ₱50 per pair. You have ' + totalItems + ' item(s) → ' + pairs + ' pair(s).';
-            } else {
-                pkgRow.style.display = 'none';
+        // Remove/hide packaging row in cart sidebar UI — packaging is added to J&T shipping and should not show separately here
+        try{
+            var pkgVal = document.getElementById('cartPackagingValue'); if(pkgVal) pkgVal.textContent = fmt(totals.packaging);
+            if(pkgRow) {
+                // If the packaging row exists inside the cart sidebar, remove it entirely so it never appears in the cart modal
+                var cartSidebar = document.getElementById('cartSidebar');
+                if(cartSidebar && cartSidebar.contains(pkgRow)) {
+                    pkgRow.remove();
+                } else {
+                    // otherwise keep it hidden (for non-sidebar contexts)
+                    pkgRow.style.display = 'none';
+                }
             }
-        }
+            // Also defensively remove any packaging row that other scripts may have inserted directly inside the cart sidebar
+            try{
+                var extra = document.querySelectorAll('#cartSidebar #cartPackagingRow');
+                extra.forEach(function(n){ if(n) n.remove(); });
+            }catch(e){}
+        }catch(e){}
         // update total row
-        var totalRow = document.getElementById('cartTotalRow');
-        if(totalRow){ var totalVal = document.getElementById('cartTotalValue'); if(totalVal) totalVal.textContent = fmt(totals.total); }
+            // ensure a single Total row exists in the cart sidebar and update it
+            try{
+                var totalRow = document.getElementById('cartTotalRow');
+                if(!totalRow){
+                    // create a Total row under the cart items area
+                    var cartSidebar = document.getElementById('cartSidebar');
+                    if(cartSidebar){
+                        totalRow = document.createElement('div');
+                        totalRow.id = 'cartTotalRow';
+                        totalRow.className = 'cart-subtotal-row';
+                        totalRow.style.marginTop = '6px';
+                        totalRow.innerHTML = '<span class="cart-subtotal-label">Total</span><span id="cartTotalValue" class="cart-subtotal-value">' + fmt(0) + '</span>';
+                        // insert before the checkout button if available
+                        var checkoutBtn = document.getElementById('checkoutBtn');
+                        if(checkoutBtn && checkoutBtn.parentNode) checkoutBtn.parentNode.insertBefore(totalRow, checkoutBtn);
+                        else cartSidebar.appendChild(totalRow);
+                    }
+                }
+                var totalVal = document.getElementById('cartTotalValue'); if(totalVal) totalVal.textContent = fmt(totals.subtotal);
+            }catch(e){}
         // update cart count
         var countEl = document.getElementById('cartCount'); if(countEl){ var totalItems2=0; cart.forEach(function(it){ var q=(typeof it.qty==='number')?it.qty:((typeof it.quantity==='number')?it.quantity:1); totalItems2 += Number(q)||0; }); countEl.textContent = totalItems2; }
     }catch(e){ /* ignore UI update errors */ }

@@ -141,6 +141,25 @@
             cursor: pointer;
             font-family: 'Poppins', Arial, sans-serif;
         }
+        /* Bank details inline field styling */
+        #bankDetailsInline input,
+        #bankDetailsInline select {
+            padding: 12px 14px;
+            border: 1px solid #d0d0d0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #fff;
+            box-sizing: border-box;
+            height: 44px;
+        }
+        #bankDetailsInline input[type="text"] { line-height: 1.2; }
+        #bankDetailsInline label { margin-bottom: 6px; display: block; }
+    /* spacing between bank details and upload proof header */
+    #bankDetailsInline { margin-bottom: 18px; }
+    /* space above upload proof section when shown (helps separate from QR or bank details) */
+    #bankActions { margin-top: 18px; }
+    .download-qr-btn { background:#222;color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:0.95rem;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+    .download-qr-btn:disabled { opacity:0.6; cursor:not-allowed; }
         /* Right side cart summary */
         .payment-cart-list {
             display: flex;
@@ -268,16 +287,9 @@
         <div class="payment-left">
             <div class="payment-header">Payment</div>
             <div class="payment-caption">Payment should be done within 24 hours upon purchase. We will confirm your<br>order once we receive the payment.<br>Please upload proof of payment after transfer.<br>We accept BDO and BPI.</div>
-            <div class="payment-divider"></div>
-            <div class="payment-method-title">💳 Choose payment method</div>
             <div class="payment-method-list" style="margin-bottom:12px;">
-                <!-- Payment selection is chosen on the Checkout page. Show the selected method here. -->
-                <div id="paymentMethodSummary" style="background:#fff;border-radius:12px;padding:12px 14px;border:1px solid #eee;font-size:1rem;color:#222;">
-                    <div id="paymentMethodLabel">Payment: (not chosen)</div>
-                    <div id="paymentMethodBank" style="color:#666;margin-top:6px;display:none;">Bank: </div>
-                </div>
+                <!-- payment selection is chosen on the Checkout page but not shown here per design -->
             </div>
-            <div class="payment-divider"></div>
             <div id="qrInstructions" style="display:none;">
                 <div class="payment-divider"></div>
                 <div class="payment-method-title">QR PH Instructions</div>
@@ -286,6 +298,15 @@
                         <li>After placing the order you'll be redirected to QR PH to complete payment.</li>
                         <li>Scan the QR using your banking app (GCash, Maya, etc.) and keep the reference/receipt.</li>
                     </ul>
+                </div>
+                <div style="margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                    <!-- QR image (place a QR file at IMAGE/QR_PH.png or update src as needed) -->
+                    <img id="paymentQRImage" src="IMAGE/QR_PH.png" alt="QR PH" style="width:220px;height:220px;border-radius:12px;border:1px solid #eee;object-fit:contain;background:#fff;" data-attempt="" />
+                    <div id="paymentQRFallback" style="font-size:0.95rem;color:#666;display:none;margin-top:8px;">QR image not available. Scan with your banking app or enter the reference number below.</div>
+                    <div style="margin-top:8px;">
+                        <button id="downloadPaymentQRBtn" class="download-qr-btn" type="button">Download QR</button>
+                    </div>
+                    <div style="font-size:0.98rem;color:#444;margin-top:8px;">Scan this QR code with your banking app to pay.</div>
                 </div>
             </div>
 
@@ -310,10 +331,41 @@
                 <div class="payment-divider"></div>
             </div>
 
-            <!-- bankDetailsRow removed: modal will be opened from Checkout when Bank Transfer is selected -->
+            <!-- Inline bank details (moved above upload/proof) -->
+            <div id="bankDetailsInline" style="display:none;margin-top:14px;">
+                <h3 style="margin:0 0 8px 0;font-size:1.05rem;">Bank Transfer Details</h3>
+                <div style="font-size:0.95rem;color:#666;margin-bottom:8px;">Provide your bank details so we can verify the transfer if needed.</div>
+                <div style="display:flex;gap:10px;margin-top:10px;">
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <label for="bankSelect" style="font-size:0.95rem;color:#333;margin-bottom:6px;">Bank</label>
+                        <select id="bankSelect"><option value="BDO">BDO</option><option value="BPI">BPI</option><option value="Other">Other</option></select>
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <label for="acctTypeSelect" style="font-size:0.95rem;color:#333;margin-bottom:6px;">Account/Card Type</label>
+                        <select id="acctTypeSelect"><option value="savings">Savings</option><option value="current">Current</option><option value="debit">Debit Card</option><option value="credit">Credit Card</option></select>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:10px;">
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <label for="acctNameInput" style="font-size:0.95rem;color:#333;margin-bottom:6px;">Account Name</label>
+                        <input id="acctNameInput" type="text" placeholder="Account name" maxlength="30" />
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <label for="acctNumberInput" style="font-size:0.95rem;color:#333;margin-bottom:6px;">Account Number</label>
+                        <input id="acctNumberInput" type="text" placeholder="000000000000" maxlength="12" />
+                    </div>
+                </div>
+                <div style="margin-top:10px;display:flex;gap:10px;">
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <label for="bankNote" style="font-size:0.95rem;color:#333;margin-bottom:6px;">Notes (optional)</label>
+                        <input id="bankNote" type="text" placeholder="e.g. branch or reference" maxlength="60" />
+                    </div>
+                </div>
+                <!-- Auto-save on input/change; no Save/Cancel buttons per design -->
+            </div>
 
             <div id="bankActions" style="display:none;">
-                <div class="payment-upload-title">Upload proof of payment here</div>
+                <h3 style="margin:0 0 8px 0;font-size:1.05rem;">Upload Proof of Payment Here</h3>
                 <div class="payment-upload-box" id="uploadProofBtn">+ Upload Proof of Payment</div>
                 <!-- hidden file input used to pick proof files -->
                 <input id="uploadProofInput" type="file" accept="image/*,application/pdf" style="display:none;" />
@@ -447,20 +499,55 @@
         }
         document.getElementById('paymentShippingLabel').textContent = shippingLabel ? ('Shipping: ' + shippingLabel) : 'Shipping';
         document.getElementById('paymentShippingValue').textContent = '₱' + shipping.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-        // compute packaging fee (prefer persisted checkoutPackaging, fall back to helper)
-        var packaging = 0;
-        try {
-            var storedPkg = localStorage.getItem('checkoutPackaging');
-            if (storedPkg !== null) packaging = Number(storedPkg) || 0;
-            else if (window.getCartTotals && typeof window.getCartTotals === 'function') packaging = Number(window.getCartTotals(cart).packaging || 0);
-            else if (window.computePackagingFee && typeof window.computePackagingFee === 'function') packaging = Number(window.computePackagingFee(cart) || 0);
-            else { var totalItems = 0; cart.forEach(function(it){ totalItems += (it.qty || it.quantity || 1); }); packaging = Math.floor(totalItems/2) * 50; }
-        } catch (e) { packaging = 0; }
-        // update packaging UI
-        try{ var pkgEl = document.getElementById('paymentPackagingValue'); if(pkgEl) pkgEl.textContent = '₱' + packaging.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }catch(e){}
-        document.getElementById('paymentTotal').textContent = '₱' + (subtotal + shipping + packaging).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+        // Packaging fee is included in checkoutShipping for J&T — do not display packaging separately here
+        try{
+            var pkgEl = document.getElementById('paymentPackagingValue'); if(pkgEl) pkgEl.style.display = 'none';
+            var pkgRow = document.getElementById('paymentPackagingRow'); if(pkgRow) pkgRow.style.display = 'none';
+        }catch(e){}
+        // Show total as subtotal + shipping (shipping already includes any packaging for J&T)
+        document.getElementById('paymentTotal').textContent = '₱' + (subtotal + shipping).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
     }
     window.addEventListener('DOMContentLoaded', renderPaymentCart);
+
+    // Helper: generate a QR image URL via public API for payment payloads
+    function generatePaymentQRUrl(payload, size){
+        try{
+            size = Number(size) || 220;
+            // keep payload short and non-sensitive; include timestamp if not provided
+            if(!payload) payload = 'SHOEPAO:' + Date.now();
+            return 'https://api.qrserver.com/v1/create-qr-code/?size=' + encodeURIComponent(size + 'x' + size) + '&data=' + encodeURIComponent(payload) + '&_=' + Date.now();
+        }catch(e){ return '' }
+    }
+
+    // Download the currently-displayed payment QR image (handles data URLs and remote images)
+    function downloadPaymentQR(){
+        try{
+            var img = document.getElementById('paymentQRImage');
+            if(!img || !img.src) return alert('QR image not available yet.');
+            var url = img.src;
+            var btn = document.getElementById('downloadPaymentQRBtn');
+            if(btn) { btn.disabled = true; btn.textContent = 'Downloading...'; }
+            // If it's a data URL, trigger download directly
+            if(url.indexOf('data:') === 0){
+                var a = document.createElement('a'); a.href = url; a.download = 'shoe_pao_qr_' + Date.now() + '.png'; document.body.appendChild(a); a.click(); try{ a.remove(); }catch(e){}
+                if(btn){ btn.disabled = false; btn.textContent = 'Download QR'; }
+                return;
+            }
+            // Otherwise try fetching the image as blob (CORS may block this if server disallows)
+            fetch(url, { mode: 'cors' }).then(function(res){ if(!res.ok) throw new Error('Failed to fetch'); return res.blob(); }).then(function(blob){
+                var a = document.createElement('a');
+                var objectUrl = URL.createObjectURL(blob);
+                a.href = objectUrl;
+                a.download = 'shoe_pao_qr_' + Date.now() + '.png';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function(){ URL.revokeObjectURL(objectUrl); try{ a.remove(); }catch(e){} }, 1500);
+            }).catch(function(){
+                // fallback: open in new tab so user can save manually
+                try{ window.open(url, '_blank'); }catch(e){ alert('Unable to download QR.'); }
+            }).finally(function(){ if(btn){ btn.disabled = false; btn.textContent = 'Download QR'; } });
+        }catch(e){ if(document.getElementById('downloadPaymentQRBtn')){ document.getElementById('downloadPaymentQRBtn').disabled = false; document.getElementById('downloadPaymentQRBtn').textContent = 'Download QR'; } console.error('downloadPaymentQR error', e); alert('Unable to download QR.'); }
+    }
 
         // Show/hide instruction blocks depending on chosen payment method
         document.addEventListener('DOMContentLoaded', function(){
@@ -471,21 +558,54 @@
                 var qrEl = document.getElementById('qrInstructions');
                 var bankEl = document.getElementById('bankInstructions');
                 var bankActions = document.getElementById('bankActions');
-                var bankDetailsRow = document.getElementById('bankDetailsRow');
+                // inline bank details section (replaces the old modal)
+                var bankDetailsInline = document.getElementById('bankDetailsInline');
                 var codEl = document.getElementById('codInstructions');
                 // hide all first
                 if(qrEl) qrEl.style.display = 'none';
                 if(bankEl) bankEl.style.display = 'none';
                 if(bankActions) bankActions.style.display = 'none';
-                if(bankDetailsRow) bankDetailsRow.style.display = 'none';
+                if(bankDetailsInline) bankDetailsInline.style.display = 'none';
                 if(codEl) codEl.style.display = 'none';
                 // show based on code
                 if(code === 'qr_ph'){
                     if(qrEl) qrEl.style.display = '';
+                    // also show upload + reference block (bankActions) so users can upload proof and enter ref for QR PH
+                    if(bankActions) bankActions.style.display = '';
+                        // Attempt to load a QR image data/url saved in localStorage (checkoutQR).
+                        // If none exists, generate a QR image URL via public QR API to avoid 404 when the static
+                        // `IMAGE/QR_PH.png` file is missing on the server.
+                        try{
+                            var qrImg = document.getElementById('paymentQRImage');
+                            var storedQR = localStorage.getItem('checkoutQR');
+                            if(qrImg){
+                                if(storedQR){
+                                    qrImg.src = storedQR;
+                                } else {
+                                    // generate a short, non-sensitive payload for the QR
+                                    var payload = localStorage.getItem('checkoutPaymentPayload') || ('SHOEPAO:' + Date.now());
+                                    var generated = generatePaymentQRUrl(payload, 240);
+                                    if(generated) qrImg.src = generated;
+                                }
+                                qrImg.style.display = '';
+                                // on error, attempt a packaged image once; otherwise show the fallback message
+                                qrImg.onerror = function(){
+                                    try{
+                                        if(!qrImg.dataset.attempt || qrImg.dataset.attempt === ''){
+                                            qrImg.dataset.attempt = 'fallback';
+                                            qrImg.src = 'IMAGE/QR_PH.png';
+                                        } else {
+                                            qrImg.style.display = 'none';
+                                            var fb = document.getElementById('paymentQRFallback'); if(fb) fb.style.display = 'block';
+                                        }
+                                    }catch(e){}
+                                };
+                            }
+                        }catch(e){}
                 } else if(code === 'bank_transfer'){
                     if(bankEl) bankEl.style.display = '';
                     if(bankActions) bankActions.style.display = '';
-                    if(bankDetailsRow) bankDetailsRow.style.display = '';
+                    if(bankDetailsInline) bankDetailsInline.style.display = '';
                 } else if(code === 'cod'){
                     if(codEl) codEl.style.display = '';
                 }
@@ -502,6 +622,12 @@
                 code = (code||'').toString().toLowerCase();
                 // helper to sanitize input: remove non-digit characters
                 function sanitizeDigits(v, max){ v = v.toString().replace(/\D/g,''); if(max) v = v.slice(0, max); return v; }
+                // also apply similar formatting/validation to bank/account fields when present
+                var acctNumEl = document.getElementById('acctNumberInput');
+                var acctNameEl = document.getElementById('acctNameInput');
+                function removeHandler(el, prop){ try{ if(el && el[prop]) el.removeEventListener('input', el[prop]); }catch(e){} }
+                function setDigitHandler(el, max){ if(!el) return; removeHandler(el, '_acctHandler'); el._acctHandler = function(){ this.value = sanitizeDigits(this.value, max); }; el.addEventListener('input', el._acctHandler); }
+
                 if(code === 'qr_ph'){
                     // QR PH (commonly GCash/Maya): reference numbers are usually 9 digits for GCash
                     ref.setAttribute('placeholder','000000000');
@@ -512,6 +638,9 @@
                     ref.removeEventListener('input', ref._refHandler || function(){});
                     ref._refHandler = function(){ this.value = sanitizeDigits(this.value, 9); };
                     ref.addEventListener('input', ref._refHandler);
+                    // remove any special handlers from acct fields
+                    if(acctNumEl){ acctNumEl.setAttribute('placeholder','Account / Card number'); acctNumEl.setAttribute('maxlength','30'); removeHandler(acctNumEl, '_acctHandler'); }
+                    if(acctNameEl){ acctNameEl.setAttribute('placeholder','Account name'); acctNameEl.setAttribute('maxlength','60'); removeHandler(acctNameEl, '_acctHandler'); }
                 } else if(code === 'bank_transfer'){
                     // Bank transfer reference/account numbers (14 characters suggested)
                     ref.setAttribute('placeholder','00000000000000');
@@ -521,6 +650,10 @@
                     ref.removeEventListener('input', ref._refHandler || function(){});
                     ref._refHandler = function(){ this.value = sanitizeDigits(this.value, 14); };
                     ref.addEventListener('input', ref._refHandler);
+                    // account number: numeric-only up to 14
+                    if(acctNumEl){ acctNumEl.setAttribute('placeholder','000000000000'); acctNumEl.setAttribute('maxlength','12'); acctNumEl.value = sanitizeDigits(acctNumEl.value, 12); setDigitHandler(acctNumEl, 12); }
+                    // account name: free text but limited length
+                    if(acctNameEl){ acctNameEl.setAttribute('placeholder','Account name'); acctNameEl.setAttribute('maxlength','30'); removeHandler(acctNameEl, '_acctHandler'); acctNameEl.addEventListener('input', function(){ if(this.value && this.value.length>30) this.value = this.value.slice(0,30); }); }
                 } else {
                     // default: allow alphanumeric up to 30
                     ref.setAttribute('placeholder','Enter reference number');
@@ -528,6 +661,9 @@
                     // remove numeric-only handler if present
                     ref.removeEventListener('input', ref._refHandler || function(){});
                     ref._refHandler = null;
+                    // reset acct fields to default lengths
+                    if(acctNumEl){ acctNumEl.setAttribute('placeholder','Account / Card number'); acctNumEl.setAttribute('maxlength','30'); removeHandler(acctNumEl, '_acctHandler'); }
+                    if(acctNameEl){ acctNameEl.setAttribute('placeholder','Account name'); acctNameEl.setAttribute('maxlength','60'); removeHandler(acctNameEl, '_acctHandler'); }
                 }
             }catch(err){ console.error('updateReferenceFieldConstraints error', err); }
         }
@@ -537,7 +673,43 @@
             if(e.key === 'checkoutPaymentCode' || e.key === 'checkoutPayment'){
                 var code = (localStorage.getItem('checkoutPaymentCode') || '').toLowerCase();
                 if(!code){ var lbl = (localStorage.getItem('checkoutPayment')||'').toLowerCase(); if(lbl.indexOf('qr')!==-1) code='qr_ph'; if(lbl.indexOf('bank')!==-1) code='bank_transfer'; if(lbl.indexOf('cash')!==-1) code='cod'; }
-                try{ updateReferenceFieldConstraints(code); }catch(e){}
+                try{ 
+                    // update constraints
+                    updateReferenceFieldConstraints(code);
+                    // also show/hide the visible blocks in case payment selection changed in another tab
+                    var qrEl = document.getElementById('qrInstructions');
+                    var bankEl = document.getElementById('bankInstructions');
+                    var bankActions = document.getElementById('bankActions');
+                    var bankDetailsInline = document.getElementById('bankDetailsInline');
+                    var codEl = document.getElementById('codInstructions');
+                    if(qrEl) qrEl.style.display = 'none';
+                    if(bankEl) bankEl.style.display = 'none';
+                    if(bankActions) bankActions.style.display = 'none';
+                    if(bankDetailsInline) bankDetailsInline.style.display = 'none';
+                    if(codEl) codEl.style.display = 'none';
+                    if(code === 'qr_ph'){
+                        if(qrEl) qrEl.style.display = '';
+                        if(bankActions) bankActions.style.display = '';
+                        // ensure qr image uses stored data if available and reset any fallback message
+                        try{
+                            var qrImg = document.getElementById('paymentQRImage');
+                            var storedQR = localStorage.getItem('checkoutQR');
+                            var fb = document.getElementById('paymentQRFallback'); if(fb) fb.style.display = 'none';
+                            if(qrImg){
+                                qrImg.dataset.attempt = '';
+                                if(storedQR){ qrImg.src = storedQR; }
+                                else { var payload = localStorage.getItem('checkoutPaymentPayload') || ('SHOEPAO:' + Date.now()); qrImg.src = generatePaymentQRUrl(payload, 240); }
+                                qrImg.style.display = '';
+                            }
+                        }catch(e){}
+                    } else if(code === 'bank_transfer'){
+                        if(bankEl) bankEl.style.display = '';
+                        if(bankActions) bankActions.style.display = '';
+                        if(bankDetailsInline) bankDetailsInline.style.display = '';
+                    } else if(code === 'cod'){
+                        if(codEl) codEl.style.display = '';
+                    }
+                }catch(e){}
             }
         });
 
@@ -598,7 +770,8 @@
     var profile = JSON.parse(localStorage.getItem('profile') || '{}');
     var customerName = (profile && profile.name) ? profile.name : (localStorage.getItem('checkoutCustomerName') || '');
         var shippingCost = Number(localStorage.getItem('checkoutShipping') || 0);
-    var packagingCost = Number(localStorage.getItem('checkoutPackaging') || 0);
+        // packaging is already included in shippingCost for J&T; do not add it again to the order total
+        var packagingCost = 0;
         var shippingAddress = (localStorage.getItem('checkoutAddressMain') || '').trim();
         if(!shippingAddress){
             // fallback to profile
@@ -618,7 +791,7 @@
             subtotal: subtotal,
             packaging: packagingCost,
             shipping: shippingCost,
-            total: subtotal + shippingCost + packagingCost,
+            total: subtotal + shippingCost,
             paymentCode: selectedPaymentCode,
             paymentLabel: selectedPaymentLabel,
             referenceNumber: (document.getElementById('referenceNumber') ? document.getElementById('referenceNumber').value : ''),
@@ -711,29 +884,8 @@
         }catch(e){}
     });
     </script>
-    <!-- Bank details modal (inserted for Bank Transfer) -->
-    <div id="bankModalOverlay" class="bank-modal-overlay" aria-hidden="true">
-        <div class="bank-modal" role="dialog" aria-modal="true" aria-label="Bank details">
-            <button style="position:absolute;right:12px;top:10px;background:none;border:none;font-size:18px;cursor:pointer;" onclick="closeBankModal()">✕</button>
-            <h3>Bank Transfer Details</h3>
-            <div style="font-size:0.95rem;color:#666;margin-bottom:8px;">Provide your bank details so we can verify the transfer if needed.</div>
-            <div class="field-row">
-                <div class="field"><label for="bankSelect">Bank</label><select id="bankSelect"><option value="BDO">BDO</option><option value="BPI">BPI</option><option value="Other">Other</option></select></div>
-                <div class="field"><label for="acctTypeSelect">Account/Card Type</label><select id="acctTypeSelect"><option value="savings">Savings</option><option value="current">Current</option><option value="debit">Debit Card</option><option value="credit">Credit Card</option></select></div>
-            </div>
-            <div class="field-row">
-                <div class="field"><label for="acctNameInput">Account Name</label><input id="acctNameInput" type="text" placeholder="Account name" /></div>
-                <div class="field"><label for="acctNumberInput">Account Number</label><input id="acctNumberInput" type="text" placeholder="Account / Card number" /></div>
-            </div>
-            <div class="field-row">
-                <div class="field"><label for="bankNote">Notes (optional)</label><input id="bankNote" type="text" placeholder="e.g. branch or reference" /></div>
-            </div>
-            <div class="bank-modal-actions">
-                <button class="btn ghost" onclick="closeBankModal()">Cancel</button>
-                <button class="btn primary" id="saveBankDetailsBtn">Save details</button>
-            </div>
-        </div>
-    </div>
+    <!-- Inline bank details (shown on payment page when Bank Transfer is selected) -->
+    
     <script src="cart-storage.js"></script>
     <!-- ===== Cart Overlay + Sidebar HTML (universal) ===== -->
     <div id="cartOverlay" class="cart-overlay" aria-hidden="true"></div>
@@ -974,35 +1126,51 @@
     })();
     </script>
         <script>
-        // Bank modal behavior
+        // Bank details inline behavior
         function openBankModal(){
-            var o = document.getElementById('bankModalOverlay');
-            if(!o) return;
-            o.classList.add('show'); o.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
-            // preload saved values
-            try{ var sel = document.getElementById('bankSelect'); if(sel && localStorage.getItem('checkoutBank')) sel.value = localStorage.getItem('checkoutBank'); var at = document.getElementById('acctTypeSelect'); if(at && localStorage.getItem('checkoutBankAcctType')) at.value = localStorage.getItem('checkoutBankAcctType'); var an = document.getElementById('acctNameInput'); if(an) an.value = localStorage.getItem('checkoutBankAcctName') || ''; var anum = document.getElementById('acctNumberInput'); if(anum) anum.value = localStorage.getItem('checkoutBankAcctNumber') || ''; var note = document.getElementById('bankNote'); if(note) note.value = localStorage.getItem('checkoutBankNote') || ''; }catch(e){}
+            // show inline bank details instead of a modal
+            var el = document.getElementById('bankDetailsInline');
+            if(!el) return;
+            // preload saved values into the fields
+            try{
+                var sel = document.getElementById('bankSelect'); if(sel && localStorage.getItem('checkoutBank')) sel.value = localStorage.getItem('checkoutBank');
+                var at = document.getElementById('acctTypeSelect'); if(at && localStorage.getItem('checkoutBankAcctType')) at.value = localStorage.getItem('checkoutBankAcctType');
+                var an = document.getElementById('acctNameInput'); if(an) an.value = localStorage.getItem('checkoutBankAcctName') || '';
+                var anum = document.getElementById('acctNumberInput'); if(anum) anum.value = localStorage.getItem('checkoutBankAcctNumber') || '';
+                var note = document.getElementById('bankNote'); if(note) note.value = localStorage.getItem('checkoutBankNote') || '';
+            }catch(e){}
+            el.style.display = '';
+            try{ el.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
         }
-        function closeBankModal(){ var o = document.getElementById('bankModalOverlay'); if(!o) return; o.classList.remove('show'); o.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+        function closeBankModal(){ var el = document.getElementById('bankDetailsInline'); if(!el) return; el.style.display = 'none'; }
         document.addEventListener('DOMContentLoaded', function(){
             var openBtn = document.getElementById('openBankDetailsBtn');
             if(openBtn) openBtn.addEventListener('click', function(e){ e.preventDefault(); openBankModal(); });
 
-            var saveBtn = document.getElementById('saveBankDetailsBtn');
-            if(saveBtn) saveBtn.addEventListener('click', function(){
-                var bank = document.getElementById('bankSelect').value || '';
-                var acctType = document.getElementById('acctTypeSelect').value || '';
-                var acctName = document.getElementById('acctNameInput').value || '';
-                var acctNum = document.getElementById('acctNumberInput').value || '';
-                var note = document.getElementById('bankNote').value || '';
-                if(!bank || !acctName || !acctNum){ alert('Please fill Bank, Account Name and Account Number.'); return; }
-                localStorage.setItem('checkoutBank', bank);
-                localStorage.setItem('checkoutBankAcctType', acctType);
-                localStorage.setItem('checkoutBankAcctName', acctName);
-                localStorage.setItem('checkoutBankAcctNumber', acctNum);
-                localStorage.setItem('checkoutBankNote', note);
-                // reflect in UI
-                var bankEl = document.getElementById('paymentMethodBank'); if(bankEl){ bankEl.style.display='block'; bankEl.textContent = 'Bank: ' + bank + ' (' + acctType + ')'; }
-                closeBankModal();
+            // Auto-save bank detail fields as the user types or changes selections
+            [
+                { id: 'bankSelect', key: 'checkoutBank' },
+                { id: 'acctTypeSelect', key: 'checkoutBankAcctType' },
+                { id: 'acctNameInput', key: 'checkoutBankAcctName' },
+                { id: 'acctNumberInput', key: 'checkoutBankAcctNumber' },
+                { id: 'bankNote', key: 'checkoutBankNote' }
+            ].forEach(function(mapping){
+                try{
+                    var el = document.getElementById(mapping.id);
+                    if(!el) return;
+                    // save on change
+                    el.addEventListener('change', function(){ try{ localStorage.setItem(mapping.key, this.value || ''); var bankEl = document.getElementById('paymentMethodBank'); if(bankEl){ var b = localStorage.getItem('checkoutBank')||''; var at = localStorage.getItem('checkoutBankAcctType')||''; if(b){ bankEl.style.display='block'; bankEl.textContent = 'Bank: ' + b + (at ? ' ('+at+')' : ''); } } }catch(e){} });
+                    // also save on input for immediate persistence and enforce constraints for certain fields
+                    if(mapping.id === 'acctNumberInput'){
+                        el.addEventListener('input', function(){ try{ this.value = this.value.replace(/\D/g,'').slice(0,12); localStorage.setItem(mapping.key, this.value || ''); }catch(e){} });
+                    } else if(mapping.id === 'acctNameInput'){
+                        el.addEventListener('input', function(){ try{ if(this.value && this.value.length > 30) this.value = this.value.slice(0,30); localStorage.setItem(mapping.key, this.value || ''); }catch(e){} });
+                    } else if(mapping.id === 'bankNote'){
+                        el.addEventListener('input', function(){ try{ if(this.value && this.value.length > 60) this.value = this.value.slice(0,60); localStorage.setItem(mapping.key, this.value || ''); }catch(e){} });
+                    } else {
+                        // for selects etc. keep change handler only
+                    }
+                }catch(err){}
             });
 
             // Upload proof of payment behavior
@@ -1016,6 +1184,9 @@
             if(uploadBtn && uploadInput){
                 uploadBtn.addEventListener('click', function(e){ e.preventDefault(); uploadInput.click(); });
             }
+
+            // attach download button handler for payment QR (if present)
+            try{ var dl = document.getElementById('downloadPaymentQRBtn'); if(dl) dl.addEventListener('click', function(e){ e.preventDefault(); downloadPaymentQR(); }); }catch(e){}
             if(uploadInput){
                 uploadInput.addEventListener('change', function(e){
                     var f = (uploadInput.files && uploadInput.files[0]) ? uploadInput.files[0] : null;

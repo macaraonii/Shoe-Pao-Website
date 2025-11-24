@@ -80,6 +80,8 @@
                     <div id="orderModalEst" style="margin-bottom:6px;color:#444;"></div>
                     <div id="orderModalPayment" style="margin-bottom:6px;color:#444;"></div>
                     <div id="orderModalAddress" style="margin-bottom:6px;"></div>
+                    <!-- Revocation reasons (populated when an admin revokes a cancellation) -->
+                    <div id="orderModalRevocation" style="display:none;margin-top:6px;color:#b71c1c;font-weight:600;"></div>
                 </div>
                 <img id="orderModalImg" src="" alt="Product" style="width:160px;height:110px;object-fit:cover;border-radius:8px;">
             </div>
@@ -191,7 +193,8 @@
                     <div class="order-card-code-row">Order ${order.id}</div>
                     ${ shortAddr ? ('<div style="padding:6px 18px;color:#666;font-size:0.95rem;">Ship to: ' + shortAddr + '</div>') : '' }
                     ${ order.est ? ('<div style="padding:6px 18px;color:#444;font-size:0.95rem;font-weight:600;">Est. Delivery: ' + order.est + '</div>') : '' }
-                    <div class="order-card-btn-row">
+                        ${ (order.cancellation && order.cancellation.adminRevoked) ? ('<div style="padding:6px 18px;color:#b71c1c;font-weight:600;">Cancel Request Was Revoked</div>') : '' }
+                        <div class="order-card-btn-row">
                         <button class="order-card-btn view-btn" onclick="openOrderModal(${idx})">View Order</button>
                         <button class="order-card-btn cancel-btn" onclick="requestCancelOrder(${idx})">Cancel</button>
                         <button class="order-card-btn refund-btn" onclick="requestRefundOrder(${idx})">Refund</button>
@@ -477,6 +480,29 @@
                 document.getElementById('orderModalItems').insertAdjacentHTML('beforeend', shipLine);
             }
             document.getElementById('orderModalTotal').textContent = formatPHP(order.total || (order.subtotal + (order.shipping||0)));
+            // Show admin revocation reasons if admin revoked a cancellation
+            try{
+                var revDiv = document.getElementById('orderModalRevocation');
+                if(revDiv){
+                    if(order.cancellation && order.cancellation.adminRevoked){
+                        var rev = order.cancellation.revocation || order.cancellation.revocation || {};
+                        var reasons = (rev.reasons && rev.reasons.length) ? rev.reasons : (order.cancellation.reasons || []);
+                        var ts = rev.timestamp || order.cancellation.revocation && order.cancellation.revocation.timestamp || '';
+                        var html = '<div style="font-weight:700;color:#b71c1c;margin-top:6px;">Cancel Request Was Revoked</div>';
+                        if(reasons && reasons.length){
+                            html += '<div style="color:#444;font-weight:600;margin-top:6px;">Reason(s):</div><ul style="margin:6px 0 0 18px;color:#444;">';
+                            reasons.forEach(function(r){ html += '<li>' + (r || '') + '</li>'; });
+                            html += '</ul>';
+                        }
+                        if(ts){
+                            try{ html += '<div style="margin-top:6px;color:#666;font-size:0.9rem;">Revoked on: ' + new Date(ts).toLocaleString() + '</div>'; }catch(e){ html += '<div style="margin-top:6px;color:#666;font-size:0.9rem;">Revoked on: ' + ts + '</div>'; }
+                        }
+                        revDiv.innerHTML = html; revDiv.style.display = 'block';
+                    } else {
+                        revDiv.innerHTML = ''; revDiv.style.display = 'none';
+                    }
+                }
+            }catch(e){ /* ignore if modal missing */ }
             document.getElementById('orderModalOverlay').style.display = 'flex'; document.body.style.overflow='hidden';
         }
 

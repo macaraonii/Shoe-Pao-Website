@@ -692,14 +692,8 @@
             var code = el.dataset && el.dataset.code ? el.dataset.code : (el.querySelector('input[type="radio"]').value || '');
             if(label) localStorage.setItem('checkoutPayment', label);
             if(code) localStorage.setItem('checkoutPaymentCode', code);
-            // If QR PH option selected, show the QR modal
-            if (code === 'qr_ph') {
-                try { showQRModal(); } catch (e) { /* ignore */ }
-            }
-            // If Bank Transfer selected, open bank details modal so user can enter bank info
-            if (code === 'bank_transfer') {
-                try { showBankModal(); } catch (e) { /* ignore */ }
-            }
+            // Do NOT open any modals from checkout — payment-specific UI (QR / bank details)
+            // will be handled on the payment page. We only persist the selection here.
         }catch(e){}
     }
 
@@ -938,6 +932,9 @@
             } else {
                 localStorage.removeItem('checkoutShipping');
                 localStorage.removeItem('checkoutShippingLabel');
+                // remove any packaging details when J&T is not selected
+                localStorage.removeItem('checkoutPackaging');
+                localStorage.removeItem('checkoutPackagingDetails');
             }
         }catch(e){ console.error('updateCheckoutShippingDisplay error', e); }
         // Update DOM (if present)
@@ -1212,7 +1209,36 @@
             var cart = JSON.parse(localStorage.getItem('cart') || '[]');
             var totalQty = 0;
             cart.forEach(function(it){ totalQty += (it.qty || it.quantity || 1); });
-            var weightKg = totalQty * 1;
+            // Helper: estimate box dimensions (cm) per shoe size
+            function estimateBoxForSize(size){
+                // attempt to extract numeric portion
+                var s = (''+ (size || '')).toString();
+                var num = parseFloat((s.match(/\d+(?:\.\d+)?/)||['0'])[0]);
+                if(isNaN(num)) num = 40;
+                // mapping (approximate, one box per shoe/pair)
+                if(num <= 37) return {l:30, w:24, h:15};
+                if(num <= 40) return {l:36, w:27, h:18};
+                if(num <= 43) return {l:46, w:30, h:23};
+                return {l:60, w:36, h:32};
+            }
+            // physical weight estimate per pair (kg)
+            var PHYSICAL_WEIGHT_PER_PAIR_KG = 1;
+            var totalPhysicalWeightKg = 0;
+            var totalDimWeightKg = 0;
+            var totalBoxes = 0;
+            var boxCounts = {}; // key: dimension key, value: count
+            cart.forEach(function(it){
+                var qty = Number(it.qty || it.quantity || 1) || 0;
+                totalBoxes += qty;
+                totalPhysicalWeightKg += qty * PHYSICAL_WEIGHT_PER_PAIR_KG;
+                var dims = estimateBoxForSize(it.size);
+                var vol = (dims.l || 0) * (dims.w || 0) * (dims.h || 0); // cubic cm
+                var dimW = (vol / 5000); // dimensional weight kg using divisor 5000
+                totalDimWeightKg += dimW * qty;
+                var key = dims.l + 'x' + dims.w + 'x' + dims.h;
+                boxCounts[key] = (boxCounts[key] || 0) + qty;
+            });
+            var weightKg = Math.max(totalPhysicalWeightKg, totalDimWeightKg);
             var profile = JSON.parse(localStorage.getItem('profile') || '{}');
             // prefer explicit checkout address override
             var overrideAddr = localStorage.getItem('checkoutAddressMain');
@@ -1229,7 +1255,18 @@
                 var last = table[table.length-1];
                 return Number(last[destRegion] || last['Luzon'] || 0);
             }
-            return computeRate(originRegion, destRegion, weightKg);
+            // compute packaging fee: ₱50 per 2 boxes (every two boxes)
+            var packagingFee = Math.floor((totalBoxes || 0) / 2) * 50;
+
+            // persist packaging details so payment page & orders can show it
+            try{
+                var packagingDetails = { boxes: totalBoxes, packagingFee: packagingFee, boxCounts: boxCounts };
+                localStorage.setItem('checkoutPackaging', String(packagingFee));
+                localStorage.setItem('checkoutPackagingDetails', JSON.stringify(packagingDetails));
+            }catch(e){ }
+
+            var base = computeRate(originRegion, destRegion, weightKg);
+            return Number(base || 0) + Number(packagingFee || 0);
         }catch(e){ console.error('computeJNTShipping error', e); return 0; }
     }
     // Cart rendering
@@ -1267,25 +1304,16 @@
         var shipLblEl = document.getElementById('checkoutShippingLabel');
         if(shipValEl) shipValEl.textContent = '₱' + shipping.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
         if(shipLblEl) shipLblEl.textContent = label;
-        // compute packaging fee (use global helper if available, fallback to local compute)
-        var packaging = 0;
-        try {
-            if (window.getCartTotals && typeof window.getCartTotals === 'function') {
-                var t = window.getCartTotals(cart);
-                packaging = Number(t.packaging || 0);
-            } else if (window.computePackagingFee && typeof window.computePackagingFee === 'function') {
-                packaging = Number(window.computePackagingFee(cart) || 0);
-            } else {
-                // fallback: compute pairs * 50
-                var totalItems = 0; cart.forEach(function(it){ totalItems += (it.qty || it.quantity || 1); });
-                packaging = Math.floor(totalItems / 2) * 50;
+        // Packaging fee is already included in the J&T shipping value — do not show/add it separately in cart
+        try{
+            var pkgEl = document.getElementById('checkoutPackagingValue');
+            if(pkgEl){
+                // hide the entire row (label + value) so 'Packaging' text is not visible on checkout page
+                var row = pkgEl.closest ? pkgEl.closest('.checkout-cart-summary-row') : (pkgEl.parentNode || null);
+                if(row) row.style.display = 'none';
             }
-        } catch (e) { packaging = 0; }
-        // persist packaging for later pages
-        try { localStorage.setItem('checkoutPackaging', String(packaging)); } catch (e){}
-        // update packaging display
-        var pkgEl = document.getElementById('checkoutPackagingValue'); if(pkgEl) pkgEl.textContent = '₱' + packaging.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-        document.getElementById('checkoutTotal').textContent = '₱' + (subtotal + shipping + packaging).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+        }catch(e){}
+        document.getElementById('checkoutTotal').textContent = '₱' + (subtotal + shipping).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
     }
     window.addEventListener('DOMContentLoaded', function(){
         try{ renderCheckoutCart(); }catch(e){}

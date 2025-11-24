@@ -525,10 +525,10 @@
                 <span class="header-link" onclick="goToNewArrivals()">New Arrivals</span>
                 <span class="header-link" id="brandNav">Brands
                     <div class="brand-dropdown" id="brandDropdown" aria-hidden="true">
-                        <a href="product-list.html?brand=Nike" class="brand-drop-link"><img src="IMAGE/NIKELOGO.png" alt="Nike" style="height:28px;"></a>
-                        <a href="product-list.html?brand=Adidas" class="brand-drop-link"><img src="IMAGE/ADIDASLOGO.png" alt="Adidas" style="height:28px;"></a>
-                        <a href="product-list.html?brand=Cloudtilt" class="brand-drop-link"><img src="IMAGE/CLOUDTILTLOGO.png" alt="Cloudtilt" style="height:28px;"></a>
-                        <a href="product-list.html?brand=New%20Balance" class="brand-drop-link"><img src="IMAGE/NEWBALANCELOGO.png" alt="New Balance" style="height:28px;"></a>
+                        <a href="product-list.html?brand=Nike" class="brand-drop-link" onclick="event.preventDefault(); goToBrand('Nike')"><img src="IMAGE/NIKELOGO.png" alt="Nike" style="height:28px;"></a>
+                        <a href="product-list.html?brand=Adidas" class="brand-drop-link" onclick="event.preventDefault(); goToBrand('Adidas')"><img src="IMAGE/ADIDASLOGO.png" alt="Adidas" style="height:28px;"></a>
+                        <a href="product-list.html?brand=Cloudtilt" class="brand-drop-link" onclick="event.preventDefault(); goToBrand('Cloudtilt')"><img src="IMAGE/CLOUDTILTLOGO.png" alt="Cloudtilt" style="height:28px;"></a>
+                        <a href="product-list.html?brand=New%20Balance" class="brand-drop-link" onclick="event.preventDefault(); goToBrand('New Balance')"><img src="IMAGE/NEWBALANCELOGO.png" alt="New Balance" style="height:28px;"></a>
                     </div>
                 </span>
                 <span class="header-link" onclick="goToProductList()">Shop All</span>

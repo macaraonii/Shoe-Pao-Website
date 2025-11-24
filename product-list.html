@@ -404,10 +404,11 @@
         document.addEventListener('click', function(){ brandDropdown.style.display = 'none'; });
 
         // Read URL params and pre-filter cards if needed
-        var params = new URLSearchParams(window.location.search);
-        var qBrand = params.get('brand');
-        var qFilter = params.get('filter');
-        function applyUrlFilters(){
+    var params = new URLSearchParams(window.location.search);
+    var qBrand = params.get('brand');
+    var qFilter = params.get('filter');
+
+    function applyUrlFilters(){
             // hide the large Brands section when a specific filter/brand is active
             var brandsSection = document.getElementById('brands');
             if(brandsSection && (qBrand || qFilter)) brandsSection.style.display = 'none';
@@ -453,10 +454,20 @@
             }
         }
 
-        if(qBrand || qFilter){
-            // run after a brief delay to ensure cards rendered
-            setTimeout(applyUrlFilters, 150);
+        function runInitialFilters(){
+            // prefer brand-specific filtering if a brand param is present
+            if(qBrand){
+                // run after a brief delay to ensure cards rendered
+                setTimeout(function(){ try{ applyBrand(qBrand); }catch(e){ applyUrlFilters(); } }, 150);
+                return;
+            }
+            if(qFilter){
+                setTimeout(applyUrlFilters, 150);
+            }
         }
+
+        // run initial filters when page loads
+        runInitialFilters();
     });
     </script>
     <script>
@@ -497,6 +508,36 @@
     // Gender filter: delegate to unified filter so all controls combine correctly
     function filterGender() {
         applyAllFilters();
+    }
+
+    // Apply a brand filter from the header dropdown or elsewhere.
+    // This will check the corresponding brand checkbox, uncheck others, and run the unified filter.
+    function applyBrand(brand){
+        try{
+            if(!brand) return;
+            var boxes = Array.from(document.querySelectorAll('.brand-checkbox'));
+            var found = false;
+            boxes.forEach(function(b){
+                if(!b) return;
+                if(String(b.value || '').toLowerCase() === String(brand||'').toLowerCase()){ b.checked = true; found = true; }
+                else b.checked = false;
+            });
+            // if no brand checkboxes exist (or none matched), just perform a search-like filter
+            if(!found){
+                // mark search box and clear other filters
+                try{ var si = document.getElementById('searchInput'); if(si) si.value = '';}catch(e){}
+            }
+            // hide dropdown if present
+            try{ var dd = document.getElementById('brandDropdownPL'); if(dd) dd.style.display = 'none'; }catch(e){}
+            // apply unified filters to update visible cards
+            if(typeof applyAllFilters === 'function') applyAllFilters();
+            // update URL param for shareability (without reload)
+            try{
+                var url = new URL(window.location.href);
+                url.searchParams.set('brand', brand);
+                window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+            }catch(e){}
+        }catch(e){ console.error('applyBrand failed', e); }
     }
     // Size filter + EU/US toggle with persistent selected sizes (stored as EU internally)
     (function(){
@@ -1006,7 +1047,8 @@
                 totalRow.innerHTML = '<span class="cart-subtotal-label">Total</span><span id="cartTotalValue" class="cart-subtotal-value">₱0.00</span>';
                 cartSubtotalEl.parentNode.parentNode.insertBefore(totalRow, cartSubtotalEl.parentNode.nextSibling.nextSibling);
             }
-            var totalVal = document.getElementById('cartTotalValue'); if(totalVal) totalVal.textContent = formatPHP(totals.total);
+            // Cart modal should show only the shoes total (subtotal). Shipping/packaging handled at checkout.
+            var totalVal = document.getElementById('cartTotalValue'); if(totalVal) totalVal.textContent = formatPHP(totals.subtotal);
             attachCartEvents();
         }
         function attachCartEvents() {

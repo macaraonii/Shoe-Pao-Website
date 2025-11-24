@@ -256,7 +256,7 @@
             </div>
             <div id="cancelReviewContent" style="margin-bottom:12px;color:#444;"></div>
             <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
-                <button onclick="closeCancelReviewModal()" style="background:#fff;border:1px solid #ccc;padding:8px 14px;border-radius:10px;cursor:pointer;">Close</button>
+                <button id="cancelFooterCloseBtn" onclick="closeCancelReviewModal()" style="background:#fff;border:1px solid #ccc;padding:8px 14px;border-radius:10px;cursor:pointer;">Close</button>
                 <button id="adminRevokeBtn" style="background:#fff;border:1px solid #b71c1c;padding:8px 14px;border-radius:10px;color:#b71c1c;cursor:pointer;">Revoke Cancellation</button>
                 <button id="adminConfirmCancelBtn" style="background:#b71c1c;color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;">Confirm Cancellation</button>
             </div>
@@ -568,9 +568,23 @@
             if(row.cancellation && row.cancellation.reasons){ html += '<div style="margin-bottom:8px;"><strong>Client reasons:</strong><ul style="margin-top:6px;padding-left:18px;">'; row.cancellation.reasons.forEach(function(r){ html += '<li>' + r + '</li>'; }); html += '</ul></div>'; }
             if(row.cancellation && row.cancellation.timestamp){ html += '<div style="color:#666;font-size:0.95rem;margin-bottom:6px;">Submitted: ' + new Date(row.cancellation.timestamp).toLocaleString() + '</div>'; }
             if(row.cancellation && row.cancellation.adminConfirmed){ html += '<div style="color:green;font-weight:600;margin-bottom:6px;">Admin confirmed cancellation</div>'; }
+            // if admin revoked the cancellation, show standardized revocation message and reasons
+            if(row.cancellation && row.cancellation.adminRevoked){
+                html += '<div style="color:#b71c1c;font-weight:600;margin-bottom:6px;">Cancel Request Was Revoked</div>';
+                if(row.cancellation.revocation && row.cancellation.revocation.reasons){
+                    html += '<div style="margin-bottom:8px;"><strong>Revocation reasons:</strong><ul style="margin-top:6px;padding-left:18px;">';
+                    row.cancellation.revocation.reasons.forEach(function(r){ html += '<li>' + r + '</li>'; });
+                    html += '</ul></div>';
+                }
+            }
             content.innerHTML = html;
             // stash current id
             content.setAttribute('data-order-id', orderId);
+            // ensure footer buttons and top close are visible (restore from revoke-form state)
+            try{ var cClose = document.getElementById('cancelFooterCloseBtn'); if(cClose) cClose.style.display = ''; }catch(e){}
+            try{ var cRevoke = document.getElementById('adminRevokeBtn'); if(cRevoke) cRevoke.style.display = ''; }catch(e){}
+            try{ var cConfirm = document.getElementById('adminConfirmCancelBtn'); if(cConfirm) cConfirm.style.display = ''; }catch(e){}
+            try{ var topClose = document.getElementById('closeCancelReviewBtn'); if(topClose) topClose.style.display = ''; }catch(e){}
             document.getElementById('cancelReviewModalOverlay').style.display = 'flex'; document.body.style.overflow='hidden';
         }
 
@@ -588,13 +602,64 @@
         }
 
         function adminRevokeCancellation(){
+            // Instead of immediately revoking, open a revocation form to collect reasons (similar to refund revoke flow)
             var content = document.getElementById('cancelReviewContent'); if(!content) return; var id = content.getAttribute('data-order-id'); if(!id) return;
-            var idx = ordersData.findIndex(function(o){ return o.id === id; }); if(idx === -1) return;
-            // restore previous status if present
+            openCancelRevokeForm(id);
+        }
+
+        // Render the admin revoke form for cancellations (checkbox reasons + Other textbox)
+        function openCancelRevokeForm(orderId){
+            var content = document.getElementById('cancelReviewContent'); if(!content) return;
+            var html = '<div style="font-weight:600;margin-bottom:8px;">Revoke Cancellation</div>';
+            html += '<div style="margin-bottom:8px;">Select reason(s) for revoking this cancellation request:</div>';
+            html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">';
+            var reasons = [
+                'Cancellation Policy Violation',
+                'Order Being Shipped',
+                'Other'
+            ];
+            reasons.forEach(function(r, i){
+                if(r === 'Other'){
+                    html += '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="adminCancelRevokeReason" id="adminCancelOtherChk" /> Other: <input id="adminCancelOtherText" type="text" placeholder="Specify other reason" style="margin-left:8px;flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;" /></label>';
+                } else {
+                    html += '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="adminCancelRevokeReason" data-reason="' + r.replace(/"/g,'&quot;') + '" /> ' + r + '</label>';
+                }
+            });
+            html += '</div>';
+            html += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:nowrap;">';
+            html += '<button id="backToCancelBtn" style="background:#fff;border:1px solid #ccc;padding:8px 14px;border-radius:10px;cursor:pointer;display:inline-block;min-width:110px;">Go Back</button>';
+            html += '<button id="confirmAdminCancelRevokeBtn" style="background:#b71c1c;color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;display:inline-block;min-width:120px;">Confirm Revoke</button>';
+            html += '</div>';
+            content.innerHTML = html;
+            content.setAttribute('data-order-id', orderId);
+            // wire buttons
+            setTimeout(function(){
+                var back = document.getElementById('backToCancelBtn'); if(back) back.addEventListener('click', function(){ openCancelReviewById(orderId); });
+                var confirm = document.getElementById('confirmAdminCancelRevokeBtn'); if(confirm) confirm.addEventListener('click', function(){ adminConfirmRevokeCancellation(); });
+            }, 10);
+            // hide the modal footer default buttons while revocation form is shown
+            try{ var cClose = document.getElementById('cancelFooterCloseBtn'); if(cClose) cClose.style.display = 'none'; }catch(e){}
+            try{ var cRevoke = document.getElementById('adminRevokeBtn'); if(cRevoke) cRevoke.style.display = 'none'; }catch(e){}
+            try{ var cConfirm = document.getElementById('adminConfirmCancelBtn'); if(cConfirm) cConfirm.style.display = 'none'; }catch(e){}
+            // hide the top-right close (X) while revocation form is shown
+            try{ var topClose = document.getElementById('closeCancelReviewBtn'); if(topClose) topClose.style.display = 'none'; }catch(e){}
+        }
+
+        // Confirm the admin revoke for cancellation: collect reasons, validate, persist revocation metadata and restore previous status
+        function adminConfirmRevokeCancellation(){
+            var content = document.getElementById('cancelReviewContent'); if(!content) return; var id = content.getAttribute('data-order-id'); if(!id) return;
+            var checks = Array.prototype.slice.call(document.querySelectorAll('.adminCancelRevokeReason'));
+            var selections = [];
+            checks.forEach(function(ch){ if(ch.checked){ if(ch.id === 'adminCancelOtherChk'){ var t = (document.getElementById('adminCancelOtherText')||{}).value || ''; if(t && t.trim().length > 2) selections.push(t.trim()); } else { selections.push(ch.getAttribute('data-reason')); } } });
+            if(selections.length === 0){ alert('Please select at least one reason or provide details in Other.'); return; }
+            var idx = ordersData.findIndex(function(o){ return String(o.id) === String(id); }); if(idx === -1) return;
+            ordersData[idx].cancellation = ordersData[idx].cancellation || {};
+            ordersData[idx].cancellation.adminRevoked = true;
+            ordersData[idx].cancellation.revocation = { reasons: selections, timestamp: new Date().toISOString() };
+            // restore previous status
             var prev = ordersData[idx].previousStatus || 'Pending';
             ordersData[idx].status = prev;
             delete ordersData[idx].previousStatus;
-            delete ordersData[idx].cancellation;
             localStorage.setItem('orders', JSON.stringify(ordersData));
             applySearch(); closeCancelReviewModal();
         }
@@ -610,7 +675,7 @@
             if(row.refund && row.refund.timestamp){ html += '<div style="color:#666;font-size:0.95rem;margin-bottom:6px;">Submitted: ' + new Date(row.refund.timestamp).toLocaleString() + '</div>'; }
             if(row.refund && row.refund.proof){ html += '<div style="margin-top:8px;margin-bottom:8px;"><strong>Uploaded proof:</strong><div style="margin-top:8px;"><img src="' + row.refund.proof + '" alt="Proof" style="max-width:320px;border:1px solid #eee;border-radius:8px;object-fit:contain;"/></div></div>'; }
             if(row.refund && row.refund.adminConfirmed){ html += '<div style="color:green;font-weight:600;margin-bottom:6px;">Admin confirmed refund</div>'; }
-            if(row.refund && row.refund.adminRevoked && row.refund.revocation){ html += '<div style="color:#b71c1c;font-weight:600;margin-bottom:6px;">Admin revoked refund</div>'; html += '<div style="margin-bottom:8px;"><strong>Revocation reasons:</strong><ul style="margin-top:6px;padding-left:18px;">'; row.refund.revocation.reasons.forEach(function(r){ html += '<li>' + r + '</li>'; }); html += '</ul></div>'; }
+            if(row.refund && row.refund.adminRevoked && row.refund.revocation){ html += '<div style="color:#b71c1c;font-weight:600;margin-bottom:6px;">Refund Request Was Revoked</div>'; html += '<div style="margin-bottom:8px;"><strong>Revocation reasons:</strong><ul style="margin-top:6px;padding-left:18px;">'; row.refund.revocation.reasons.forEach(function(r){ html += '<li>' + r + '</li>'; }); html += '</ul></div>'; }
             content.innerHTML = html;
             content.setAttribute('data-order-id', orderId);
             // ensure footer buttons for refund review are visible when showing the review
