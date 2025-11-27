@@ -1,75 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log in - SHOEPAO</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shoe Pao</title>
+    <meta http-equiv="refresh" content="0;url=home.html">
+    <script>window.location.replace('home.html');</script>
 </head>
 <body>
-    <div class="container">
-        <img src="IMAGE/SHOEPAOLOGO.png" alt="SHOEPAO Logo" class="logo" style="margin-bottom:6px;">
-    <h3 class="site-name" style="margin:4px 0 8px 0;font-size:2.4rem;color:#000;font-weight:700;">Shoe Pao</h3>
-        <h2 class="login-header" style="font-size:1.2rem;margin-bottom:6px;">Log in</h2>
-        <div class="subheader">Don't have an account? <a href="signup.html" class="signup-link">Sign up</a></div>
-    <form id="loginForm" class="login-form" autocomplete="off" onsubmit="handleLogin(event)">
-            <label for="email" class="input-label">Your email</label>
-            <input type="email" id="email" name="email" class="input-box" required>
-
-            <div class="password-row">
-                <div class="password-label-row">
-                    <label for="password" class="input-label">Your password</label>
-                    <span class="toggle-password" onclick="togglePassword()" id="toggleIcon"><span class="eye-icon">&#128065;</span> Hide</span>
-                </div>
-                <input type="password" id="password" name="password" class="input-box" required>
-            </div>
-            <div class="forgot-row">
-                <a href="#" class="forgot-link">Forget your password</a>
-            </div>
-            <div id="loginError" style="color:#b71c1c;margin:8px 0;display:none"></div>
-            <button type="submit" class="login-btn">Log in</button>
-        </form>
-    </div>
-    <script>
-        // Simple client-side credential storage for demo purposes.
-        // NOTE: This is not secure for real apps. For production use server-side auth.
-        (function(){
-            try{
-                var users = JSON.parse(localStorage.getItem('users')||'null');
-                if(!Array.isArray(users)){
-                    users = [
-                        { email: 'jemar@gmail.com', password: 'password', role: 'user' },
-                        { email: 'admin@gmail.com', password: 'admin', role: 'admin' }
-                    ];
-                    localStorage.setItem('users', JSON.stringify(users));
-                }
-            }catch(e){ /* ignore */ }
-        })();
-
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('toggleIcon');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.innerHTML = '<span class="eye-icon">&#128065;</span> Show';
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.innerHTML = '<span class="eye-icon">&#128065;</span> Hide';
-            }
-        }
-
-        function handleLogin(e){
-            e.preventDefault();
-            var email = (document.getElementById('email').value||'').trim();
-            var password = (document.getElementById('password').value||'');
-            var errEl = document.getElementById('loginError'); errEl.style.display='none'; errEl.textContent='';
-            if(!email || !password){ errEl.style.display='block'; errEl.textContent='Please enter email and password.'; return; }
-            // Allow any credentials for now. Assign admin role only when email matches admin@gmail.com
-            var role = (email.trim().toLowerCase() === 'admin@gmail.com') ? 'admin' : 'user';
-            var profile = { email: email.trim().toLowerCase(), role: role, loggedAt: Date.now() };
-            try{ localStorage.setItem('profile', JSON.stringify(profile)); }catch(e){}
-            if(role === 'admin') window.location.href = 'dashboard.html'; else window.location.href = 'home.html';
-        }
-    </script>
+    <p>If you are not redirected automatically, <a href="home.html">click here to go to the homepage</a>.
+    You can <a href="login.html">log in</a> from the login page.</p>
 </body>
 </html>

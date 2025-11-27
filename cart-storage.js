@@ -10,6 +10,20 @@ function saveCart(cart) {
 }
 
 function addToCart(product) {
+    // Require user to be signed in before adding to cart.
+    try {
+        var profile = null; try{ profile = JSON.parse(localStorage.getItem('profile')||'null'); }catch(e){ profile = null; }
+        if(!profile || !profile.email){
+            // Save an optional return URL so user can come back after login
+            try{ var returnUrl = window.location.pathname + window.location.search; }catch(e){ var returnUrl = '' }
+            var redirect = 'login.html';
+            if(returnUrl) redirect += '?return=' + encodeURIComponent(returnUrl);
+            // Briefly inform user then redirect to login
+            try{ alert('Please sign in to add items to your cart. You will be redirected to the login page.'); }catch(e){}
+            window.location.href = redirect;
+            return { success: false, reason: 'login_required' };
+        }
+    }catch(e){ /* ignore auth check errors, continue to attempt adding */ }
     // Enforce inventory-aware caps before adding
     try {
         var cart = getCart();

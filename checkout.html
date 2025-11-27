@@ -879,12 +879,13 @@
 
     var JNTRates = {
         'Luzon': [
-            { max:0.5, Manila:85, Luzon:85, Visayas:100, Mindanao:105, Island:115 },
-            { max:1, Manila:155, Luzon:155, Visayas:180, Mindanao:195, Island:205 },
-            { max:3, Manila:180, Luzon:180, Visayas:200, Mindanao:220, Island:230 },
-            { max:4, Manila:270, Luzon:270, Visayas:300, Mindanao:330, Island:340 },
-            { max:5, Manila:360, Luzon:360, Visayas:400, Mindanao:440, Island:450 },
-            { max:6, Manila:455, Luzon:455, Visayas:500, Mindanao:550, Island:560 }
+            // Rates are "from Luzon" to destination regions
+            { max:0.5, Luzon:85, Manila:95, Visayas:100, Mindanao:105, Island:115 },
+            { max:1,   Luzon:155, Manila:165, Visayas:180, Mindanao:195, Island:205 },
+            { max:3,   Luzon:180, Manila:190, Visayas:200, Mindanao:220, Island:230 },
+            { max:4,   Luzon:270, Manila:280, Visayas:300, Mindanao:330, Island:340 },
+            { max:5,   Luzon:360, Manila:370, Visayas:400, Mindanao:440, Island:450 },
+            { max:6,   Luzon:455, Manila:465, Visayas:500, Mindanao:550, Island:560 }
         ],
         'Manila': [
             { max:0.5, Manila:85, Luzon:95, Visayas:100, Mindanao:105, Island:115 },
@@ -1244,8 +1245,8 @@
             var overrideAddr = localStorage.getItem('checkoutAddressMain');
             var regionOverride = localStorage.getItem('checkoutRegion');
             var destRegion = regionOverride || (overrideAddr ? determineRegion(overrideAddr, '') : determineRegion(profile.addressMain, profile.addressDetails));
-            // shipping should be calculated from Mindanao origin
-            var originRegion = 'Mindanao';
+            // shipping should be calculated from Luzon origin (change requested)
+            var originRegion = 'Luzon';
             function computeRate(originRegion, destRegion, weightKg){
                 var table = JNTRates[originRegion] || JNTRates['Luzon'];
                 var w = Number(weightKg) || 0;
@@ -1297,8 +1298,9 @@
         document.getElementById('checkoutSubtotal').textContent = '₱' + subtotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
         // ensure shipping reflects current delivery selection
         try{ updateCheckoutShippingDisplay(); }catch(e){}
-        var stored = localStorage.getItem('checkoutShipping');
-        var shipping = (stored !== null) ? Number(stored) : 250;
+    var stored = localStorage.getItem('checkoutShipping');
+    // default to 0 when no shipping has been selected; only J&T selection will set a non-zero value
+    var shipping = (stored !== null) ? Number(stored) : 0;
         var label = localStorage.getItem('checkoutShippingLabel') || 'Shipping';
         var shipValEl = document.getElementById('checkoutShippingValue');
         var shipLblEl = document.getElementById('checkoutShippingLabel');

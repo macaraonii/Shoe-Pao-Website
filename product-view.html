@@ -1812,6 +1812,16 @@ On page.</div>
             document.getElementById('productDesc').innerHTML = title + '<br>With Free Socks<br>Sizes: 41 42 43 44 45 / 8 8.5 9.5 10 11 US<br><span style="font-weight:600;">MENS</span>';
         }
     });
+    // If page is opened with ?openAR=1 instruct the page to open the AR modal automatically
+    (function(){
+        try{
+            var params = new URLSearchParams(window.location.search);
+            if(params.get('openAR') === '1'){
+                // Defer to allow the DOM to fully initialize
+                setTimeout(function(){ try{ openARModal(); }catch(e){} }, 250);
+            }
+        }catch(e){}
+    })();
     // If inventory is changed in another tab or by admin, refresh displayed stock for selected size
     window.addEventListener('storage', function(e){
         try {

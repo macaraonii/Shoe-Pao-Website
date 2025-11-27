@@ -162,7 +162,7 @@
             color: #222;
             border: none;
             border-radius: 22px;
-            padding: 10px 28px 10px 22px;
+            padding: 10px 18px;
             font-size: 1.08rem;
             font-weight: 500;
             cursor: pointer;
@@ -170,6 +170,9 @@
             align-items: center;
             gap: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            /* allow JS to set explicit pixel width; provide a sensible minimum */
+            min-width: 120px;
+            max-width: 480px;
         }
         .banner-btn .arrow {
             display: inline-block;
@@ -544,6 +547,25 @@
         </div>
     </nav>
     <script>
+    // Ensure a fresh visitor is not treated as signed-in by leftover localStorage.profile entries.
+    document.addEventListener('DOMContentLoaded', function(){
+        try{
+            var pRaw = localStorage.getItem('profile');
+            if(pRaw){
+                try{
+                    var p = JSON.parse(pRaw || '{}');
+                    // If profile exists but wasn't created via the login flow (no remember flag), remove it so visitors start signed out.
+                    if(!p || !p.remember){
+                        localStorage.removeItem('profile');
+                        // also remove any lightweight fallback persisted checkout name
+                        try{ localStorage.removeItem('checkoutCustomerName'); }catch(e){}
+                        console.log('Cleared leftover profile on initial landing to ensure visitor is signed out.');
+                    }
+                }catch(e){ try{ localStorage.removeItem('profile'); }catch(err){} }
+            }
+        }catch(e){}
+    });
+
     // Header nav helpers (home)
     function goToSale(){ window.location.href = 'product-list.html?filter=sale'; }
     function goToNewArrivals(){ window.location.href = 'product-list.html?filter=new'; }
@@ -566,17 +588,17 @@
             <div class="banner-content">
                 <div class="banner-header">New Arrivals</div>
                 <div class="banner-subheader">New Arrivals for Nike, Adidas, New Balance, and many more.</div>
-                <button class="banner-btn" onclick="scrollToSection('brands')">Shop Brands <span class="arrow"></span></button>
+                <button id="shopBrandsBtn" class="banner-btn" onclick="goToProductList()">Shop Brands <span class="arrow"></span></button>
             </div>
         </div>
     </section>
     <!-- Banner 2: AR Try-on -->
         <section class="banner-section">
         <div class="banner" style="background-image: url('IMAGE/SHOEPAOBG2.png'); background-size: cover; background-position: center;">
-            <div class="banner-content">
+                <div class="banner-content">
                 <div class="banner-header">AR Visual Shoe Try-on</div>
                 <div class="banner-subheader">Virtually try your preferred shoes to see how it looks on you!.</div>
-                <button class="banner-btn" onclick="goToARTryOn()">Try-on Shoes Now</button>
+                <button id="tryOnBtn" class="banner-btn" onclick="goToARTryOn()">Try-on Shoes Now <span class="arrow"></span></button>
             </div>
         </div>
     </section>
@@ -738,10 +760,39 @@
     function goToCartPage() {
         window.location.href = 'cart.html';
     }
-    // AR Try-On page
+    // AR Try-On: open product view and request AR modal to open there
     function goToARTryOn() {
-        window.location.href = 'ar-tryon.html';
+        // open product page and instruct it to open the AR modal via query param
+        window.location.href = 'product-view.html?openAR=1';
     }
+
+    // Ensure both banner buttons have the same visual width as the Try-on button.
+    function syncBannerButtonWidths(){
+        try{
+            var tryBtn = document.getElementById('tryOnBtn');
+            var shopBtn = document.getElementById('shopBrandsBtn');
+            if(!tryBtn || !shopBtn) return;
+            // Reset widths to natural size first
+            tryBtn.style.width = 'auto';
+            shopBtn.style.width = 'auto';
+            // measure tryBtn rendered width (including padding)
+            var rect = tryBtn.getBoundingClientRect();
+            // shorten the button length by roughly half while enforcing a sensible minimum
+            var w = Math.max(120, Math.ceil(rect.width / 2));
+            // apply same width to both buttons
+            shopBtn.style.display = 'inline-flex'; shopBtn.style.justifyContent = 'center';
+            tryBtn.style.display = 'inline-flex'; tryBtn.style.justifyContent = 'center';
+            shopBtn.style.width = w + 'px';
+            tryBtn.style.width = w + 'px';
+        }catch(e){/* ignore */}
+    }
+
+    window.addEventListener('DOMContentLoaded', function(){
+        // sync widths on load and on resize to remain responsive
+        syncBannerButtonWidths();
+        var t;
+        window.addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(syncBannerButtonWidths, 120); });
+    });
     // Shop Brand
     function goToBrand(brand) {
         window.location.href = 'product-list.html?brand=' + encodeURIComponent(brand);
