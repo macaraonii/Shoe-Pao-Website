@@ -40,8 +40,7 @@
             <span class="header-link" onclick="goToProductList()">Shop</span>
             <span class="header-link" onclick="goToOrders()">Orders</span>
             <span class="header-link" onclick="goToWishlist()">Wishlist</span>
-            <span class="header-link" onclick="goToFAQ()">FAQ</span>
-            <span class="header-link" onclick="goToContact()">Contact us</span>
+            <span class="header-link" onclick="goToFAQ()">Policies</span>
         </div>
         <div style="display:flex;align-items:center;gap:18px;">
             <button class="header-icon-btn" onclick="toggleSearchBox()" style="background:none;border:none;padding:6px;display:flex;align-items:center;cursor:pointer;"><img src="IMAGE/SEARCHICON.png" class="header-icon" alt="Search" style="width:26px;height:26px;"></button>
@@ -165,10 +164,28 @@
         // Render orders from localStorage.orders (client order history)
         function renderOrders(){
             const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+            const profile = JSON.parse(localStorage.getItem('profile')||'{}') || {};
             const container = document.getElementById('ordersList');
             container.innerHTML='';
             if(!orders || orders.length===0){ container.innerHTML='<div style="color:#666">You have no orders yet.</div>'; return; }
-            orders.forEach((order, idx)=>{
+
+            // If a non-admin user is signed in, only show orders that belong to their email.
+            let visibleOrders = orders;
+            try{
+                if(profile && profile.email && String((profile.role||'')).toLowerCase() !== 'admin'){
+                    const email = (profile.email||'').toLowerCase();
+                    visibleOrders = orders.filter(function(o){
+                        const candidates = [o.email, o.customerEmail, o.checkoutEmail, o.customerName];
+                        if(o.profile && o.profile.email) candidates.push(o.profile.email);
+                        if(o.customer && o.customer.email) candidates.push(o.customer.email);
+                        return candidates.some(c => (c||'').toLowerCase() === email);
+                    });
+                }
+            }catch(e){ /* ignore filter errors and show all */ }
+
+            if(!visibleOrders || visibleOrders.length === 0){ container.innerHTML='<div style="color:#666">You have no orders yet.</div>'; return; }
+
+            visibleOrders.forEach((order, idx)=>{
                 const itemCount = order.items.reduce((s,it)=>s + (it.quantity||it.qty||1), 0);
                 const firstImage = (order.items[0] && (order.items[0].image || 'IMAGE/NIKE1.png'));
                 // derive a short shipping snippet for card display
@@ -207,6 +224,21 @@
         window.renderOrders = renderOrders;
 
         window.addEventListener('DOMContentLoaded', renderOrders);
+        // If URL has ?open=<orderId>, open that order modal by finding its index
+        window.addEventListener('DOMContentLoaded', function(){
+            try{
+                var params = new URLSearchParams(window.location.search);
+                var openId = params.get('open');
+                if(openId){
+                    var orders = JSON.parse(localStorage.getItem('orders')||'[]');
+                    var idx = orders.findIndex(function(o){ return (o.id||'') === openId; });
+                    if(idx !== -1){
+                        // ensure render completed then open modal
+                        setTimeout(function(){ openOrderModal(idx); }, 120);
+                    }
+                }
+            }catch(e){/* ignore */}
+        });
 
         // Listen for orders changes from other tabs/windows (so admin updates reflect here)
         window.addEventListener('storage', function(e){
@@ -517,7 +549,7 @@
     function goToProductList() { window.location.href = 'product-list.html'; }
     function goToOrders() { window.location.href = 'client-orders.html'; }
     function goToWishlist() { window.location.href = 'wishlist.html'; }
-    function goToFAQ() { window.location.href = 'faq.html'; }
+    function goToFAQ() { window.location.href = 'policy.html'; }
     function goToContact() { window.location.href = 'contact.html'; }
     function goToUserPage() { window.location.href = 'profile.html'; }
     function goToCartPage() { window.location.href = 'cart.html'; }

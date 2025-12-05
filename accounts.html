@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Shoe Pao — Accounts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root{--accent:#b71c1c;--muted:#666;--page-bg:#fafafa}
+        body{font-family:'Poppins',Arial,sans-serif;margin:0;background:var(--page-bg);color:#222}
+        .topbar{background:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #eee;position:sticky;top:0;z-index:50}
+        .nav-left{display:flex;align-items:center;gap:22px;width:70%;max-width:820px}
+        .nav-left-inner{display:flex;align-items:center;justify-content:space-between;width:100%}
+        .logo-wrap{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+        .logo-wrap img{height:40px}
+        .site-title{font-weight:600;color:var(--accent);font-size:1.05rem}
+        .nav-item{font-size:0.98rem;font-weight:500;color:#222;cursor:pointer;text-decoration:none;padding:8px 12px;border-radius:6px}
+        .nav-item:hover{color:var(--accent)}
+        .nav-right{display:flex;align-items:center;gap:12px}
+        .profile-btn{background:none;border:0;padding:6px;cursor:pointer}
+        .profile-btn img{width:34px;height:34px}
+        .container{max-width:1100px;margin:28px auto;padding:20px}
+        .page-title{font-size:1.6rem;font-weight:700;margin-bottom:6px}
+        .sub{color:var(--muted);margin-bottom:12px}
+        table.accounts-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #eee;border-radius:8px;overflow:hidden}
+        table.accounts-table th, table.accounts-table td{padding:12px 14px;border-bottom:1px solid #f0f0f0;text-align:left}
+        table.accounts-table thead th{background:#fafafa;font-weight:700}
+        .empty{color:#666;padding:24px;text-align:center}
+        .action-link{color:var(--accent);text-decoration:none;font-weight:600}
+    .search-row{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+    /* visually prominent white search box with black outline */
+    .search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #000;border-radius:10px;padding:6px 8px;box-shadow:none}
+    .search-icon{width:20px;height:20px;opacity:0.85}
+    .search-input{flex:1;padding:10px 12px;border:0;background:transparent;border-radius:6px;outline:none;font-size:0.95rem;min-width:320px}
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="nav-left">
+            <div class="nav-left-inner">
+                <a class="logo-wrap" href="dashboard.html" aria-label="Shoe Pao dashboard">
+                    <img src="IMAGE/SHOEPAOLOGO.png" alt="ShoePao logo">
+                    <span class="site-title">Shoe Pao Footwear</span>
+                </a>
+                <a class="nav-item" href="dashboard.html">OVERVIEW</a>
+                <a class="nav-item" href="orders.html">Orders</a>
+                <a class="nav-item" href="inventory.html">Inventory</a>
+                <a class="nav-item" href="accounts.html">Accounts</a>
+            </div>
+        </div>
+        <div class="nav-right">
+            <button class="profile-btn" onclick="location.href='profile.html'" aria-label="Profile">
+                <img src="IMAGE/USERICON.png" alt="User">
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-title">Accounts</div>
+        <div class="sub">List of registered users. Click a row to view details and orders.</div>
+
+        <div style="margin-bottom:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;">
+            <div style="flex:1 1 72%">
+                <div class="search-row">
+                    <div class="search-box" style="width:100%;">
+                        <img src="IMAGE/SEARCHICON.png" class="search-icon" alt="Search">
+                        <input id="accountsSearch" class="search-input" placeholder="Search by name, email, or phone number" aria-label="Search accounts" />
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <label for="typeFilter" style="font-size:0.95rem;color:#444">Type</label>
+                <select id="typeFilter" style="padding:8px;border-radius:8px;border:1px solid #ddd;background:#fff">
+                    <option value="all">All</option>
+                    <option value="admin">Admin</option>
+                    <option value="client">Client</option>
+                </select>
+                <label for="alphaSort" style="font-size:0.95rem;color:#444">Sort</label>
+                <select id="alphaSort" style="padding:8px;border-radius:8px;border:1px solid #ddd;background:#fff">
+                    <option value="none">Default</option>
+                    <option value="az">A → Z</option>
+                    <option value="za">Z → A</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="accountsWrap">
+            <table class="accounts-table" id="accountsTable">
+                <thead>
+                    <tr>
+                    <th>Full name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="accountsTbody">
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <script>
+    (function(){
+        function getUsers(){ try{ return JSON.parse(localStorage.getItem('users') || '[]') }catch(e){ return [] } }
+        function formatName(u){ if(!u) return 'EMPTY'; var first = (u.firstName || u.name || '').trim(); var last = (u.lastName || '').trim(); var full = (first + (last ? (' ' + last) : '')).trim(); return full || 'EMPTY'; }
+
+        function render(){
+            var users = getUsers() || [];
+            // Backfill missing user names from orders if possible (persist so it appears in profiles/accounts)
+            try{
+                var orders = JSON.parse(localStorage.getItem('orders')||'[]') || [];
+                var didUpdate = false;
+                users = users.map(function(u){
+                    var hasName = (u.firstName && u.firstName.trim()) || (u.lastName && u.lastName.trim()) || (u.name && u.name.trim());
+                    if(hasName) return u;
+                    var email = (u.email||'').toLowerCase();
+                    if(!email) return u;
+                    var found = orders.find(function(o){
+                        var candidates = [o.email, o.customerEmail, (o.profile && o.profile.email), (o.customer && o.customer.email)];
+                        return candidates.some(function(c){ return (c||'').toLowerCase() === email; }) && o.customerName;
+                    });
+                    if(found && found.customerName){
+                        // persist the name into user's name fields
+                        var parts = (found.customerName||'').trim().split(/\s+/);
+                        if(parts.length === 1){ u.firstName = parts[0]; }
+                        else if(parts.length > 1){ u.firstName = parts.shift(); u.lastName = parts.join(' '); }
+                        else { u.name = found.customerName; }
+                        didUpdate = true;
+                    }
+                    return u;
+                });
+                if(didUpdate){ localStorage.setItem('users', JSON.stringify(users)); }
+                }catch(e){ /* ignore */ }
+            const tbody = document.getElementById('accountsTbody');
+            tbody.innerHTML = '';
+            if(!users || users.length===0){ document.getElementById('accountsWrap').innerHTML = '<div class="empty">No accounts found.</div>'; return; }
+            const q = (document.getElementById('accountsSearch').value || '').toLowerCase().trim();
+            const typeFilter = (document.getElementById('typeFilter').value || 'all');
+            const alphaSort = (document.getElementById('alphaSort').value || 'none');
+
+            // filter by search and type
+            let filtered = users.filter(u=>{
+                // type filter
+                const role = (u.role||'').toLowerCase();
+                if(typeFilter === 'admin' && role !== 'admin') return false;
+                if(typeFilter === 'client' && role === 'admin') return false;
+                // search
+                if(!q) return true;
+                const joined = (formatName(u) + ' ' + (u.email||'') + ' ' + (u.phone||'')).toLowerCase();
+                return joined.indexOf(q) !== -1;
+            });
+
+            // Always show admins on top when viewing All; apply alphabetical sort within groups if requested
+            const rolePriority = (u) => ((u.role||'').toLowerCase() === 'admin') ? 0 : 1;
+
+            filtered.sort(function(a,b){
+                // primary: role priority
+                const pa = rolePriority(a), pb = rolePriority(b);
+                if(pa !== pb) return pa - pb;
+                // secondary: alphabetical if requested
+                if(alphaSort === 'az' || alphaSort === 'za'){
+                    const na = formatName(a).toLowerCase();
+                    const nb = formatName(b).toLowerCase();
+                    if(na < nb) return (alphaSort === 'az') ? -1 : 1;
+                    if(na > nb) return (alphaSort === 'az') ? 1 : -1;
+                    return 0;
+                }
+                // otherwise keep stable order (fallback to name asc)
+                const na = formatName(a).toLowerCase();
+                const nb = formatName(b).toLowerCase();
+                return na < nb ? -1 : (na > nb ? 1 : 0);
+            });
+
+            filtered.forEach(u=>{
+                const tr = document.createElement('tr');
+                const name = formatName(u);
+                const email = u.email || 'EMPTY';
+                const phone = u.phone || 'EMPTY';
+                const type = (u.role && u.role.toLowerCase() === 'admin') ? 'Admin' : 'Client';
+                tr.innerHTML = '<td>' + name + '</td><td>' + email + '</td><td>' + phone + '</td><td>' + type + '</td><td><a class="action-link" href="account-detail.html?email=' + encodeURIComponent(email) + '">View</a></td>';
+                tr.style.cursor = 'pointer';
+                tr.onclick = function(e){
+                    // if clicked the link, let it through
+                    if(e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'a') return;
+                    window.location.href = 'account-detail.html?email=' + encodeURIComponent(email);
+                };
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('accountsSearch').addEventListener('input', function(){ render(); });
+        var tf = document.getElementById('typeFilter'); if(tf) tf.addEventListener('change', function(){ render(); });
+        var as = document.getElementById('alphaSort'); if(as) as.addEventListener('change', function(){ render(); });
+        window.addEventListener('storage', function(e){ if(e.key === 'users' || e.key === 'orders') render(); });
+        document.addEventListener('DOMContentLoaded', render);
+    })();
+    </script>
+
+</body>
+</html>

@@ -796,6 +796,11 @@
             paymentLabel: selectedPaymentLabel,
             referenceNumber: (document.getElementById('referenceNumber') ? document.getElementById('referenceNumber').value : ''),
             customerName: customerName,
+            // Add explicit customer identifiers so orders can be associated with user accounts
+            customerEmail: (profile && profile.email) ? profile.email : (localStorage.getItem('checkoutCustomerEmail') || ''),
+            customerPhone: (profile && profile.phone) ? profile.phone : (localStorage.getItem('checkoutCustomerPhone') || ''),
+            // keep a snapshot of the profile that placed the order (if available)
+            profile: (profile && Object.keys(profile).length) ? profile : undefined,
             deliveryCode: deliveryCode,
             deliveryLabel: deliveryLabel,
             deliveryMethod: deliveryLabel
