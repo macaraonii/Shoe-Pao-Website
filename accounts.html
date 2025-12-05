@@ -82,6 +82,7 @@
                     <option value="az">A → Z</option>
                     <option value="za">Z → A</option>
                 </select>
+                <button id="createAccountBtn" style="margin-left:12px;padding:8px 12px;border-radius:8px;border:1px solid #000;background:#000;color:#fff;cursor:pointer">+ Create Account</button>
             </div>
         </div>
 
@@ -181,11 +182,19 @@
                 const email = u.email || 'EMPTY';
                 const phone = u.phone || 'EMPTY';
                 const type = (u.role && u.role.toLowerCase() === 'admin') ? 'Admin' : 'Client';
-                tr.innerHTML = '<td>' + name + '</td><td>' + email + '</td><td>' + phone + '</td><td>' + type + '</td><td><a class="action-link" href="account-detail.html?email=' + encodeURIComponent(email) + '">View</a></td>';
+                tr.innerHTML = '<td>' + name + '</td><td>' + email + '</td><td>' + phone + '</td><td>' + type + '</td><td>' +
+                    '<a class="action-link" href="account-detail.html?email=' + encodeURIComponent(email) + '">View</a>' +
+                    ' <button class="action-btn edit-btn" data-email="' + encodeURIComponent(email) + '" style="margin-left:8px;padding:6px 10px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">Edit</button>' +
+                    ' <button class="action-btn delete-btn" data-email="' + encodeURIComponent(email) + '" style="margin-left:6px;padding:6px 10px;border-radius:6px;border:1px solid #b71c1c;background:#fff;color:#b71c1c;cursor:pointer">Delete</button>' +
+                    '</td>';
                 tr.style.cursor = 'pointer';
                 tr.onclick = function(e){
-                    // if clicked the link, let it through
-                    if(e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'a') return;
+                    // if clicked the link or a button, let that control handle it
+                    if(e.target && e.target.tagName){
+                        var t = e.target.tagName.toLowerCase();
+                        if(t === 'a') return;
+                        if(e.target.closest && e.target.closest('.action-btn')) return;
+                    }
                     window.location.href = 'account-detail.html?email=' + encodeURIComponent(email);
                 };
                 tbody.appendChild(tr);
@@ -197,6 +206,123 @@
         var as = document.getElementById('alphaSort'); if(as) as.addEventListener('change', function(){ render(); });
         window.addEventListener('storage', function(e){ if(e.key === 'users' || e.key === 'orders') render(); });
         document.addEventListener('DOMContentLoaded', render);
+    })();
+    </script>
+
+    <script>
+    // Utility used by modal phone input
+    function formatPhone(input) {
+        var value = (input.value||'').replace(/\D/g, '');
+        var formatted = '';
+        if (value.length > 0) formatted += value.substring(0,3);
+        if (value.length > 3) formatted += ' ' + value.substring(3,6);
+        if (value.length > 6) formatted += ' ' + value.substring(6,10);
+        input.value = formatted;
+    }
+
+    // Modal + create/edit/delete wiring
+    (function(){
+        var modalHtml = '\n<div id="accountModal" style="display:none;position:fixed;inset:0;z-index:20000;align-items:center;justify-content:center;">' +
+            '<div id="modalOverlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5)"></div>' +
+            '<div style="position:relative;max-width:560px;width:94%;background:#fff;border-radius:10px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.15);z-index:20001">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+            '<div style="font-weight:700;font-size:1.15rem" id="modalTitle">Create account</div>' +
+            '<button id="closeModalBtn" style="background:none;border:0;font-size:1.2rem;cursor:pointer">✕</button>' +
+            '</div>' +
+            '<form id="accountForm" autocomplete="off" style="display:block">' +
+            '<div style="display:flex;gap:10px;margin-bottom:8px">' +
+            '<input id="firstName_m" placeholder="First name" required style="flex:1;padding:10px;border:1px solid #ddd;border-radius:6px">' +
+            '<input id="lastName_m" placeholder="Last name" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:6px">' +
+            '</div>' +
+            '<div style="margin-bottom:8px"><input id="email_m" type="email" placeholder="Email" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>' +
+            '<div style="margin-bottom:8px"><input id="phone_m" placeholder="Phone (xxx xxx xxxx)" maxlength="12" oninput="formatPhone(this)" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>' +
+            '<div style="margin-bottom:8px"><input id="password_m" type="password" placeholder="Password (leave blank to keep existing)" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px"></div>' +
+            '<div style="margin-bottom:12px"><label for="role_m">Role</label> <select id="role_m" style="margin-left:8px;padding:8px;border-radius:6px;border:1px solid #ddd"><option value="client">Client</option><option value="admin">Admin</option></select></div>' +
+            '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+            '<button type="button" id="cancelModal" style="padding:8px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">Cancel</button>' +
+            '<button type="submit" id="saveAccountBtn" style="padding:8px 14px;border-radius:6px;border:0;background:#000;color:#fff;cursor:pointer">Save</button>' +
+            '</div>' +
+            '</form>' +
+            '</div></div>\n';
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        var modal = document.getElementById('accountModal');
+        var closeBtn = document.getElementById('closeModalBtn');
+        var cancelBtn = document.getElementById('cancelModal');
+        var form = document.getElementById('accountForm');
+        var modalTitle = document.getElementById('modalTitle');
+        var createBtn = document.getElementById('createAccountBtn');
+        var currentMode = 'create';
+        var editingEmail = null;
+
+        function openAccountModal(mode, email){
+            currentMode = mode || 'create';
+            editingEmail = email || null;
+            modalTitle.textContent = (currentMode === 'create') ? 'Create account' : 'Edit account';
+            document.getElementById('firstName_m').value = '';
+            document.getElementById('lastName_m').value = '';
+            document.getElementById('email_m').value = '';
+            document.getElementById('phone_m').value = '';
+            document.getElementById('password_m').value = '';
+            document.getElementById('role_m').value = 'client';
+            if(currentMode === 'edit' && editingEmail){
+                try{
+                    var users = JSON.parse(localStorage.getItem('users')||'[]')||[];
+                    var u = users.find(function(x){ return (x.email||'').toLowerCase() === (decodeURIComponent(editingEmail)||'').toLowerCase(); });
+                    if(u){
+                        document.getElementById('firstName_m').value = u.firstName || u.name || '';
+                        document.getElementById('lastName_m').value = u.lastName || '';
+                        document.getElementById('email_m').value = u.email || '';
+                        document.getElementById('phone_m').value = u.phone || '';
+                        document.getElementById('role_m').value = (u.role && u.role.toLowerCase() === 'admin') ? 'admin' : 'client';
+                    }
+                }catch(e){ /* ignore */ }
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeAccountModal(){ modal.style.display = 'none'; editingEmail = null; }
+        closeBtn.addEventListener('click', closeAccountModal);
+        cancelBtn.addEventListener('click', closeAccountModal);
+        if(createBtn) createBtn.addEventListener('click', function(){ openAccountModal('create'); });
+
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            var firstName = (document.getElementById('firstName_m').value||'').trim();
+            var lastName = (document.getElementById('lastName_m').value||'').trim();
+            var email = (document.getElementById('email_m').value||'').trim().toLowerCase();
+            var phone = (document.getElementById('phone_m').value||'').trim();
+            var password = (document.getElementById('password_m').value||'');
+            var role = (document.getElementById('role_m').value||'client');
+            if(!email){ alert('Please enter an email'); return; }
+            try{
+                var users = JSON.parse(localStorage.getItem('users')||'[]') || [];
+                var existing = users.find(function(u){ return (u.email||'').toLowerCase() === email; });
+                if(currentMode === 'create'){
+                    if(existing){ alert('A user with this email already exists'); return; }
+                    var newUser = { email: email, password: password || '', firstName: firstName, lastName: lastName, phone: phone, role: (role === 'admin' ? 'admin' : 'user'), registeredAt: Date.now() };
+                    users.push(newUser);
+                } else {
+                    if(!existing){ alert('User not found'); closeAccountModal(); return; }
+                    existing.firstName = firstName || existing.firstName;
+                    existing.lastName = lastName || existing.lastName;
+                    existing.phone = phone || existing.phone;
+                    if(password) existing.password = password;
+                    existing.role = (role === 'admin') ? 'admin' : (existing.role || 'user');
+                }
+                localStorage.setItem('users', JSON.stringify(users));
+                closeAccountModal();
+                // refresh table
+                try{ render(); }catch(e){}
+            }catch(err){ console.warn('Could not save user', err); alert('Could not save user'); }
+        });
+
+        // delegate clicks for edit/delete in the table
+        document.getElementById('accountsTbody').addEventListener('click', function(e){
+            var editBtn = e.target.closest && e.target.closest('.edit-btn');
+            if(editBtn){ var em = editBtn.getAttribute('data-email') || ''; openAccountModal('edit', em); return; }
+            var delBtn = e.target.closest && e.target.closest('.delete-btn');
+            if(delBtn){ var em2 = decodeURIComponent(delBtn.getAttribute('data-email')||''); if(confirm('Delete account ' + em2 + '? This cannot be undone.')){ try{ var users = JSON.parse(localStorage.getItem('users')||'[]')||[]; users = users.filter(function(u){ return (u.email||'').toLowerCase() !== (em2||'').toLowerCase(); }); localStorage.setItem('users', JSON.stringify(users)); try{ render(); }catch(e){} }catch(err){ console.warn('Delete failed', err); alert('Delete failed'); } } }
+        });
     })();
     </script>
 
