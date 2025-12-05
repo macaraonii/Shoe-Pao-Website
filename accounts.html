@@ -82,7 +82,7 @@
                     <option value="az">A → Z</option>
                     <option value="za">Z → A</option>
                 </select>
-                <button id="createAccountBtn" style="margin-left:12px;padding:8px 12px;border-radius:8px;border:1px solid #000;background:#000;color:#fff;cursor:pointer">+ Create Account</button>
+                <button id="createAccountBtn" style="margin-left:12px;padding:6px 10px;border-radius:8px;border:1px solid #000;background:#000;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"> <span style="font-weight:600; font-size:0.95rem;">Create account</span><span style="font-size:1.05rem; margin-top:4px;">+</span></button>
             </div>
         </div>
 
@@ -251,8 +251,8 @@
         var form = document.getElementById('accountForm');
         var modalTitle = document.getElementById('modalTitle');
         var createBtn = document.getElementById('createAccountBtn');
-        var currentMode = 'create';
-        var editingEmail = null;
+    var currentMode = 'create';
+    var editingEmail = null;
 
         function openAccountModal(mode, email){
             currentMode = mode || 'create';
@@ -297,18 +297,30 @@
             try{
                 var users = JSON.parse(localStorage.getItem('users')||'[]') || [];
                 var existing = users.find(function(u){ return (u.email||'').toLowerCase() === email; });
-                if(currentMode === 'create'){
-                    if(existing){ alert('A user with this email already exists'); return; }
-                    var newUser = { email: email, password: password || '', firstName: firstName, lastName: lastName, phone: phone, role: (role === 'admin' ? 'admin' : 'user'), registeredAt: Date.now() };
-                    users.push(newUser);
-                } else {
-                    if(!existing){ alert('User not found'); closeAccountModal(); return; }
-                    existing.firstName = firstName || existing.firstName;
-                    existing.lastName = lastName || existing.lastName;
-                    existing.phone = phone || existing.phone;
-                    if(password) existing.password = password;
-                    existing.role = (role === 'admin') ? 'admin' : (existing.role || 'user');
-                }
+                    if(currentMode === 'create'){
+                        if(existing){ alert('A user with this email already exists'); return; }
+                        var newUser = { email: email, password: password || '', firstName: firstName, lastName: lastName, phone: phone, role: (role === 'admin' ? 'admin' : 'user'), registeredAt: Date.now() };
+                        users.push(newUser);
+                    } else {
+                        // When editing, locate the original record by the editingEmail (the original email before edits)
+                        var originalEmail = (editingEmail ? decodeURIComponent(editingEmail) : null);
+                        var idx = -1;
+                        if(originalEmail){ idx = users.findIndex(function(u){ return (u.email||'').toLowerCase() === (originalEmail||'').toLowerCase(); }); }
+                        // If we couldn't find by original email, fallback to finding by the submitted email
+                        if(idx === -1){ idx = users.findIndex(function(u){ return (u.email||'').toLowerCase() === (email||'').toLowerCase(); }); }
+                        if(idx === -1){ alert('User not found'); closeAccountModal(); return; }
+                        // Ensure new email is not colliding with a different user
+                        var collision = users.find(function(u, i){ return i !== idx && (u.email||'').toLowerCase() === (email||'').toLowerCase(); });
+                        if(collision){ alert('Another user already uses that email'); return; }
+                        var existingUser = users[idx];
+                        existingUser.firstName = firstName || existingUser.firstName;
+                        existingUser.lastName = lastName || existingUser.lastName;
+                        existingUser.phone = phone || existingUser.phone;
+                        if(password) existingUser.password = password;
+                        existingUser.role = (role === 'admin') ? 'admin' : (existingUser.role || 'user');
+                        // If email changed, update it
+                        existingUser.email = email;
+                    }
                 localStorage.setItem('users', JSON.stringify(users));
                 closeAccountModal();
                 // refresh table
