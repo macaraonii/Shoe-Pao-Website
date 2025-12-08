@@ -267,6 +267,14 @@
             <div class="profile-address-details" id="profileAddressDetails">QUEZON CITY, 1118, PH</div>
         </div>
         <div class="profile-address-plus" onclick="addAddress()"><img src="IMAGE/Plus.png" alt="Plus">Use a different address</div>
+        <div id="profileAddressEditor" style="display:none;margin-top:10px"> 
+            <div class="profile-label">Edit address</div>
+            <textarea id="profileAddressTextarea" rows="3" class="profile-input" placeholder="Enter full shipping address (street, barangay, city/province, postal code)"></textarea>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                <button id="profileAddressCancel" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer">Cancel</button>
+                <button id="profileAddressSave" style="padding:8px 12px;border-radius:8px;border:0;background:#000;color:#fff;cursor:pointer">Save</button>
+            </div>
+        </div>
         <div class="profile-section-divider"></div>
         <div class="profile-label">Contact Number</div>
         <div class="profile-phone-row">
@@ -317,13 +325,19 @@
     <script>
     // Navigation bar functions
     function goToHome() { window.location.href = 'home.html'; }
-    function goToProfile() { window.location.href = 'profile.html'; }
+    function goToProfile() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToProductList() { window.location.href = 'product-list.html'; }
     function goToOrders() { window.location.href = 'client-orders.html'; }
     function goToWishlist() { window.location.href = 'wishlist.html'; }
     function goToFAQ() { window.location.href = 'policy.html'; }
     function goToContact() { window.location.href = 'contact.html'; }
-    function goToUserPage() { window.location.href = 'profile.html'; }
+    function goToUserPage() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToCartPage() { window.location.href = 'cart.html'; }
     function toggleSearchBox() {
         var box = document.getElementById('searchBox');
@@ -454,7 +468,7 @@
     // Populate profile inputs from localStorage if available and auto-save on change
     document.addEventListener('DOMContentLoaded', function(){
         try{
-            var p = JSON.parse(localStorage.getItem('profile') || 'null');
+            var p = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || 'null');
             if(p){
                 if(document.getElementById('profileName')) document.getElementById('profileName').value = p.name || '';
                 if(document.getElementById('profileEmail')) document.getElementById('profileEmail').value = p.email || '';
@@ -495,10 +509,84 @@
             var el = document.getElementById(id);
             if(el) el.addEventListener('input', debouncedAutosave);
         });
+        // update UI when profile changes in another tab/window (listen to profile or a timestamp key)
+        window.addEventListener('storage', function(e){
+            try{
+                if(e.key === 'profile' || e.key === 'profile_updated_at' || e.key === 'profile_updated_at_session'){
+                    // prefer sessionStorage when present, fall back to localStorage
+                    var np = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || 'null');
+                    if(np){
+                        if(document.getElementById('profileName')) document.getElementById('profileName').value = np.name || '';
+                        if(document.getElementById('profileEmail')) document.getElementById('profileEmail').value = np.email || '';
+                        if(document.getElementById('profileAddressMain')) document.getElementById('profileAddressMain').textContent = np.addressMain || '';
+                        if(document.getElementById('profileAddressDetails')) document.getElementById('profileAddressDetails').textContent = np.addressDetails || '';
+                        if(document.getElementById('profilePhone')) document.getElementById('profilePhone').value = np.phone || '';
+                    }
+                }
+            }catch(ex){/* ignore */}
+        });
     });
     // Add address (stub)
     function addAddress() {
-        alert('Add address functionality coming soon.');
+        var editor = document.getElementById('profileAddressEditor');
+        var ta = document.getElementById('profileAddressTextarea');
+        var main = document.getElementById('profileAddressMain');
+        var details = document.getElementById('profileAddressDetails');
+        if(!editor) return;
+        if(editor.style.display === 'none' || editor.style.display === ''){
+            // open and preload from current address
+            ta.value = (main ? main.textContent.trim() : '') + (details && details.textContent ? ('\n' + details.textContent.trim()) : '');
+            editor.style.display = 'block';
+            ta.focus();
+            // wire buttons
+            var saveBtn = document.getElementById('profileAddressSave');
+            var cancelBtn = document.getElementById('profileAddressCancel');
+            if(saveBtn){ saveBtn.onclick = function(){ saveProfileAddress(); }; }
+            if(cancelBtn){ cancelBtn.onclick = function(){ editor.style.display = 'none'; }; }
+        } else {
+            editor.style.display = 'none';
+        }
+    }
+
+    function saveProfileAddress(){
+        var ta = document.getElementById('profileAddressTextarea');
+        var val = (ta ? ta.value.trim() : '');
+        var main = document.getElementById('profileAddressMain');
+        var details = document.getElementById('profileAddressDetails');
+        var editor = document.getElementById('profileAddressEditor');
+        var addrMain = '';
+        var addrDetails = '';
+        if(val){
+            addrMain = val.split('\n')[0] || val;
+            addrDetails = val.split('\n').slice(1).join(', ') || '';
+            if(main) main.textContent = addrMain;
+            if(details) details.textContent = addrDetails;
+        } else {
+            if(main) main.textContent = '';
+            if(details) details.textContent = '';
+        }
+        // persist to profile and users list
+        try{
+            var p = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}') || {};
+            p.addressMain = addrMain; p.addressDetails = addrDetails;
+            localStorage.setItem('profile', JSON.stringify(p));
+        }catch(e){}
+        try{
+            var users = JSON.parse(localStorage.getItem('users') || '[]') || [];
+            var email = (document.getElementById('profileEmail') && document.getElementById('profileEmail').value) ? document.getElementById('profileEmail').value.trim().toLowerCase() : '';
+            if(email){
+                for(var i=0;i<users.length;i++){
+                    if((users[i].email||'').toLowerCase() === email){
+                        users[i].addressMain = addrMain || users[i].addressMain;
+                        users[i].addressDetails = addrDetails || users[i].addressDetails;
+                        break;
+                    }
+                }
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }catch(e){}
+        if(editor) editor.style.display = 'none';
+        alert('Address saved');
     }
     // Sticky footer fallback for short content
     function stickyFooter() {

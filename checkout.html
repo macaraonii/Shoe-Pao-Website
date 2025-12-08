@@ -622,7 +622,13 @@
     function goToNewArrivals() { window.location.href = 'product-list.html?new=1'; }
     function goToBrands() { window.location.href = 'product-list.html#brands'; }
     function goToProductList() { window.location.href = 'product-list.html'; }
-    function goToUserPage() { window.location.href = 'profile.html'; }
+    function goToUserPage() {
+        try{
+            var p = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || 'null');
+            if(!p || !p.email) { window.location.href = 'login.html'; return; }
+        }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToCartPage() { window.location.href = 'cart.html'; }
     function toggleSearchBox() {
         var box = document.getElementById('searchBox');
@@ -966,13 +972,13 @@
             var stored = localStorage.getItem('checkoutRegion');
             if(stored){ sel.value = stored; document.getElementById('checkoutRegionHint').textContent = 'Using selected region: ' + stored; }
             else {
-                var profile = JSON.parse(localStorage.getItem('profile') || '{}');
+                var profile = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}');
                 var inferred = determineRegion(profile.addressMain, profile.addressDetails);
                 if(inferred) document.getElementById('checkoutRegionHint').textContent = 'Auto-detected region: ' + inferred;
             }
             sel.addEventListener('change', function(){
                 var v = (this.value || '').trim();
-                if(v === ''){ localStorage.removeItem('checkoutRegion'); var profile = JSON.parse(localStorage.getItem('profile') || '{}'); var inferred = determineRegion(profile.addressMain, profile.addressDetails); document.getElementById('checkoutRegionHint').textContent = 'Auto-detected region: ' + (inferred || 'Luzon'); }
+                if(v === ''){ localStorage.removeItem('checkoutRegion'); var profile = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}'); var inferred = determineRegion(profile.addressMain, profile.addressDetails); document.getElementById('checkoutRegionHint').textContent = 'Auto-detected region: ' + (inferred || 'Luzon'); }
                 else { localStorage.setItem('checkoutRegion', v); document.getElementById('checkoutRegionHint').textContent = 'Using selected region: ' + v; }
                 updateCheckoutShippingDisplay();
             });
@@ -1240,7 +1246,7 @@
                 boxCounts[key] = (boxCounts[key] || 0) + qty;
             });
             var weightKg = Math.max(totalPhysicalWeightKg, totalDimWeightKg);
-            var profile = JSON.parse(localStorage.getItem('profile') || '{}');
+            var profile = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}');
             // prefer explicit checkout address override
             var overrideAddr = localStorage.getItem('checkoutAddressMain');
             var regionOverride = localStorage.getItem('checkoutRegion');
@@ -1270,6 +1276,55 @@
             return Number(base || 0) + Number(packagingFee || 0);
         }catch(e){ console.error('computeJNTShipping error', e); return 0; }
     }
+    
+    // Helper: get active profile (sessionStorage preferred)
+    function getActiveProfile(){
+        try{ return JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}'); }catch(e){ return {}; }
+    }
+
+    // Initialize checkout UI from active profile (name, email, address). Falls back to any checkoutAddressMain override.
+    function initCheckoutProfileDisplay(){
+        try{
+            var p = getActiveProfile() || {};
+            var accountEl = document.getElementById('accountEmail');
+            if(accountEl){
+                accountEl.textContent = (p && p.email) ? p.email : 'Not signed in';
+            }
+            var addrMainEl = document.querySelector('.checkout-address-main');
+            var addrDetailsEl = document.querySelector('.checkout-address-details');
+            var storedAddr = localStorage.getItem('checkoutAddressMain') || localStorage.getItem('checkoutAddress');
+            if(storedAddr){
+                if(addrMainEl) addrMainEl.textContent = (storedAddr.split('\n')[0] || storedAddr);
+                if(addrDetailsEl) addrDetailsEl.textContent = (storedAddr.split('\n').slice(1).join(', ') || '');
+            } else {
+                // Use profile fields. If profile has no addressMain, show EXACT text 'EMPTY' per requirement.
+                var profileHasAddress = p && p.addressMain && (('' + p.addressMain).trim().length > 0);
+                if(profileHasAddress){
+                    var mainText = '';
+                    if(p.name && (''+p.name).trim().length) mainText += p.name + ', ';
+                    mainText += p.addressMain;
+                    if(addrMainEl) addrMainEl.textContent = mainText;
+                    if(addrDetailsEl) addrDetailsEl.textContent = (p.addressDetails || '');
+                } else {
+                    if(addrMainEl) addrMainEl.textContent = 'EMPTY';
+                    if(addrDetailsEl) addrDetailsEl.textContent = '';
+                }
+            }
+        }catch(e){ console.error('initCheckoutProfileDisplay error', e); }
+    }
+
+    // Listen for profile or checkout address changes from other tabs and refresh UI
+    window.addEventListener('storage', function(e){
+        try{
+            if(!e) return;
+            if(e.key === 'profile' || e.key === 'profile_updated_at' || e.key === 'checkoutAddressMain'){
+                initCheckoutProfileDisplay();
+                try{ initRegionSelector(); }catch(err){}
+                try{ updateCheckoutShippingDisplay(); }catch(err){}
+                try{ renderCheckoutCart(); }catch(err){}
+            }
+        }catch(err){ /* ignore */ }
+    });
     // Cart rendering
     function renderCheckoutCart() {
         var cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -1321,6 +1376,7 @@
         try{ renderCheckoutCart(); }catch(e){}
         try{ initRegionSelector(); }catch(e){}
         try{ initAddressEditor(); }catch(e){}
+        try{ initCheckoutProfileDisplay(); }catch(e){}
     });
 
     // Proceed from checkout to payment: persist the chosen delivery/payment and the customer name shown on the page
@@ -1350,13 +1406,39 @@
             if(paymentLabel) localStorage.setItem('checkoutPayment', paymentLabel);
         }catch(e){}
         try{
-            // derive customer name from address main (before the first comma)
-            var addr = document.querySelector('.checkout-address-main');
-            if(addr){
-                var txt = addr.textContent.trim();
-                var name = txt.split(',')[0].trim();
-                if(name) localStorage.setItem('checkoutCustomerName', name);
+            // prefer the active profile's name when available
+            var profile = (function(){ try{ return JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}'); }catch(e){ return {}; } })();
+            if(profile && profile.name){
+                localStorage.setItem('checkoutCustomerName', profile.name);
+            } else {
+                // derive customer name from address main (before the first comma)
+                var addr = document.querySelector('.checkout-address-main');
+                if(addr){
+                    var txt = addr.textContent.trim();
+                    var name = txt.split(',')[0].trim();
+                    if(name) localStorage.setItem('checkoutCustomerName', name);
+                }
             }
+            // persist customer email as well (use profile email when available)
+            try{
+                if(profile && profile.email) localStorage.setItem('checkoutCustomerEmail', profile.email);
+                else localStorage.removeItem('checkoutCustomerEmail');
+            }catch(e){}
+            // ensure there is a persisted checkoutAddressMain for downstream pages: prefer explicit override, else profile.addressMain
+            try{
+                var storedAddr = localStorage.getItem('checkoutAddressMain') || localStorage.getItem('checkoutAddress');
+                if(!storedAddr){
+                    if(profile && profile.addressMain){
+                        // store profile addressMain (not including name) so other flows can geocode/parse
+                        localStorage.setItem('checkoutAddressMain', profile.addressMain);
+                        if(profile.addressDetails) localStorage.setItem('checkoutAddressDetails', profile.addressDetails);
+                    } else {
+                        // ensure removal so downstream code sees empty
+                        localStorage.removeItem('checkoutAddressMain');
+                        localStorage.removeItem('checkoutAddressDetails');
+                    }
+                }
+            }catch(e){}
         }catch(e){}
         // persist any edited address/region the user may have entered in the editor
         try{

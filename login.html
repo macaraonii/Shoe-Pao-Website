@@ -70,8 +70,25 @@
             if(!email || !password){ errEl.style.display='block'; errEl.textContent='Please enter email and password.'; return; }
             // Allow any credentials for now. Assign admin role only when email matches admin@gmail.com
             var role = (email.trim().toLowerCase() === 'admin@gmail.com') ? 'admin' : 'user';
+            // Try to find a matching user entry to populate full profile fields (name, phone, address)
+            var users = [];
+            try{ users = JSON.parse(localStorage.getItem('users') || '[]') || []; }catch(e){ users = []; }
+            var matched = users.find(function(u){ return (u.email||'').toLowerCase() === email.trim().toLowerCase(); }) || null;
             var profile = { email: email.trim().toLowerCase(), role: role, loggedAt: Date.now(), remember: true };
-            try{ localStorage.setItem('profile', JSON.stringify(profile)); }catch(e){}
+            if(matched){
+                // prefer explicit name fields, then first/last
+                profile.name = matched.name || ((matched.firstName||'') + (matched.lastName ? (' ' + matched.lastName) : '')).trim() || '';
+                profile.firstName = matched.firstName || '';
+                profile.lastName = matched.lastName || '';
+                profile.phone = matched.phone || '';
+                profile.addressMain = matched.addressMain || '';
+                profile.addressDetails = matched.addressDetails || '';
+            }
+            try{
+                // keep the active profile in sessionStorage so it does not persist across browser restarts
+                sessionStorage.setItem('profile', JSON.stringify(profile));
+                sessionStorage.setItem('profile_updated_at', String(Date.now()));
+            }catch(e){}
             // If a return URL was provided, go back there, otherwise use home/dashboard
             var ret = getQueryParam('return');
             if(ret) {

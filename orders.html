@@ -310,13 +310,19 @@
     <script>
     // Navigation bar functions
     function goToHome() { window.location.href = 'home.html'; }
-    function goToProfile() { window.location.href = 'profile.html'; }
+    function goToProfile() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToProductList() { window.location.href = 'product-list.html'; }
     function goToOrders() { window.location.href = 'orders.html'; }
     function goToWishlist() { window.location.href = 'wishlist.html'; }
     function goToFAQ() { window.location.href = 'policy.html'; }
     function goToContact() { window.location.href = 'contact.html'; }
-    function goToUserPage() { window.location.href = 'profile.html'; }
+    function goToUserPage() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToCartPage() { window.location.href = 'cart.html'; }
     function toggleSearchBox() {
         var box = document.getElementById('searchBox');
@@ -369,7 +375,7 @@
                 const tr = document.createElement('tr');
                 // prefer customerName, fall back to name or saved profile
                 var fallbackProfileName = '';
-                try{ fallbackProfileName = JSON.parse(localStorage.getItem('profile')||'{}').name || ''; }catch(e){}
+                try{ fallbackProfileName = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'{}').name || ''; }catch(e){}
                 var displayName = row.customerName || row.name || fallbackProfileName || '';
                 // build status cell with optional cancel-review button for admin
                 var statusHtml = titleCase(row.status || '');

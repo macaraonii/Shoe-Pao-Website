@@ -436,7 +436,10 @@
     function goToNewArrivals() { window.location.href = 'product-list.html?new=1'; }
     function goToBrands() { window.location.href = 'product-list.html#brands'; }
     function goToProductList() { window.location.href = 'product-list.html'; }
-    function goToUserPage() { window.location.href = 'profile.html'; }
+    function goToUserPage() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToCartPage() { window.location.href = 'cart.html'; }
     function toggleSearchBox() {
         var box = document.getElementById('searchBox');
@@ -767,7 +770,7 @@
         var deliveryCode = localStorage.getItem('checkoutDeliveryCode') || '';
         var deliveryLabel = localStorage.getItem('checkoutDelivery') || '';
     // try to read customer name from saved profile, otherwise from checkout
-    var profile = JSON.parse(localStorage.getItem('profile') || '{}');
+    var profile = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}');
     var customerName = (profile && profile.name) ? profile.name : (localStorage.getItem('checkoutCustomerName') || '');
         var shippingCost = Number(localStorage.getItem('checkoutShipping') || 0);
         // packaging is already included in shippingCost for J&T; do not add it again to the order total
@@ -775,7 +778,7 @@
         var shippingAddress = (localStorage.getItem('checkoutAddressMain') || '').trim();
         if(!shippingAddress){
             // fallback to profile
-            var profile = JSON.parse(localStorage.getItem('profile') || '{}');
+            var profile = JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}');
             if(profile && (profile.addressMain || profile.addressDetails)){
                 shippingAddress = (profile.addressMain || '') + (profile.addressDetails ? (', ' + profile.addressDetails) : '');
             }

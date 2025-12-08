@@ -12,7 +12,7 @@ function saveCart(cart) {
 function addToCart(product) {
     // Require user to be signed in before adding to cart.
     try {
-        var profile = null; try{ profile = JSON.parse(localStorage.getItem('profile')||'null'); }catch(e){ profile = null; }
+    var profile = null; try{ profile = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); }catch(e){ profile = null; }
         if(!profile || !profile.email){
             // Save an optional return URL so user can come back after login
             try{ var returnUrl = window.location.pathname + window.location.search; }catch(e){ var returnUrl = '' }

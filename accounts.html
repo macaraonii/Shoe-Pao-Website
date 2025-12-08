@@ -205,7 +205,9 @@
         var tf = document.getElementById('typeFilter'); if(tf) tf.addEventListener('change', function(){ render(); });
         var as = document.getElementById('alphaSort'); if(as) as.addEventListener('change', function(){ render(); });
         window.addEventListener('storage', function(e){ if(e.key === 'users' || e.key === 'orders') render(); });
-        document.addEventListener('DOMContentLoaded', render);
+    document.addEventListener('DOMContentLoaded', render);
+    // expose render to other scripts so delete/edit can trigger an immediate refresh
+    try{ window.renderAccountsTable = render; }catch(e){}
     })();
     </script>
 
@@ -333,7 +335,25 @@
             var editBtn = e.target.closest && e.target.closest('.edit-btn');
             if(editBtn){ var em = editBtn.getAttribute('data-email') || ''; openAccountModal('edit', em); return; }
             var delBtn = e.target.closest && e.target.closest('.delete-btn');
-            if(delBtn){ var em2 = decodeURIComponent(delBtn.getAttribute('data-email')||''); if(confirm('Delete account ' + em2 + '? This cannot be undone.')){ try{ var users = JSON.parse(localStorage.getItem('users')||'[]')||[]; users = users.filter(function(u){ return (u.email||'').toLowerCase() !== (em2||'').toLowerCase(); }); localStorage.setItem('users', JSON.stringify(users)); try{ render(); }catch(e){} }catch(err){ console.warn('Delete failed', err); alert('Delete failed'); } } }
+            if(delBtn){
+                var em2 = decodeURIComponent(delBtn.getAttribute('data-email')||'');
+                if(confirm('Delete account ' + em2 + '? This cannot be undone.')){
+                    try{
+                        var users = JSON.parse(localStorage.getItem('users')||'[]')||[];
+                        users = users.filter(function(u){ return (u.email||'').toLowerCase() !== (em2||'').toLowerCase(); });
+                        localStorage.setItem('users', JSON.stringify(users));
+                        // If the deleted account matches the currently active profile, clear the profile so no stale session remains
+                        try{
+                            var prof = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null');
+                            if(prof && (prof.email||'').toLowerCase() === (em2||'').toLowerCase()){
+                                try{ sessionStorage.removeItem('profile'); sessionStorage.removeItem('profile_updated_at'); }catch(e){}
+                                try{ localStorage.removeItem('profile'); localStorage.removeItem('profile_updated_at'); }catch(e){}
+                            }
+                        }catch(e){ /* ignore profile clear errors */ }
+                        try{ if(typeof window.renderAccountsTable === 'function'){ window.renderAccountsTable(); } else if(typeof render === 'function'){ render(); } }catch(e){}
+                    }catch(err){ console.warn('Delete failed', err); alert('Delete failed'); }
+                }
+            }
         });
     })();
     </script>

@@ -252,6 +252,10 @@
                     <input type="text" id="phone" name="phone" class="phone-input" maxlength="12" pattern="[0-9]{3} [0-9]{3} [0-9]{4}" placeholder="xxx xxx xxxx" required oninput="formatPhone(this)">
                 </div>
             </div>
+            <div class="input-group">
+                <label for="address" class="input-label">Address (street, barangay, city/province, postal code)</label>
+                <textarea id="address" name="address" class="input-box" rows="3" placeholder="e.g. 123 Green St., Barangay 3, Quezon City, 1100"></textarea>
+            </div>
             <div class="password-row">
                 <div class="password-label-row">
                     <label for="password" class="input-label">Password</label>
@@ -309,6 +313,9 @@ function handleSignup(e) {
         var email = (document.getElementById('email').value||'').trim().toLowerCase();
         var phone = (document.getElementById('phone').value||'').trim();
         var password = (document.getElementById('password').value||'');
+        var addressVal = (document.getElementById('address') ? document.getElementById('address').value : '').trim();
+        var addressMain = addressVal.split('\n')[0] || addressVal;
+        var addressDetails = addressVal.split('\n').slice(1).join(', ') || '';
         if(!email){ alert('Please enter an email'); return; }
         // load existing users or create array
         var users = [];
@@ -319,16 +326,28 @@ function handleSignup(e) {
             // update existing record
             existing.firstName = firstName || existing.firstName;
             existing.lastName = lastName || existing.lastName;
+            // keep a combined name field for compatibility with other pages
+            existing.name = ((existing.firstName || '') + (existing.lastName ? (' ' + existing.lastName) : '')).trim() || existing.name;
             existing.phone = phone || existing.phone;
             if(password) existing.password = password;
+            // update address fields if provided
+            if(addressMain) existing.addressMain = addressMain;
+            if(addressDetails) existing.addressDetails = addressDetails;
         } else {
-            var newUser = { email: email, password: password, firstName: firstName, lastName: lastName, phone: phone, role: 'user', registeredAt: Date.now() };
+            var newUser = { email: email, password: password, firstName: firstName, lastName: lastName, name: ((firstName || '') + (lastName ? (' ' + lastName) : '')).trim(), phone: phone, role: 'user', registeredAt: Date.now() };
+            if(addressMain) newUser.addressMain = addressMain;
+            if(addressDetails) newUser.addressDetails = addressDetails;
             users.push(newUser);
         }
         localStorage.setItem('users', JSON.stringify(users));
         // also set the active profile for this session
-        var profile = { name: (firstName + (lastName ? (' ' + lastName) : '')).trim() || '', email: email, phone: phone };
-        localStorage.setItem('profile', JSON.stringify(profile));
+    var profile = { name: (firstName + (lastName ? (' ' + lastName) : '')).trim() || '', email: email, phone: phone, addressMain: addressMain || '', addressDetails: addressDetails || '' };
+    // persist profile and mark update time so other pages can detect the change
+        try{ 
+            // store profile for this browsing session (cleared on close)
+            sessionStorage.setItem('profile', JSON.stringify(profile));
+            sessionStorage.setItem('profile_updated_at', String(Date.now()));
+        }catch(e){ }
     }catch(err){ console.warn('Could not save new user', err); }
     window.location.href = 'home.html';
 }

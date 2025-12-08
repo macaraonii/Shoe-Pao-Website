@@ -1645,6 +1645,7 @@ On page.</div>
         window.location.href = 'product-list.html';
     }
     function goToUserPage() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
         window.location.href = 'profile.html';
     }
     function goToCartPage() {

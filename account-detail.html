@@ -272,7 +272,7 @@
             var order = orders[idx];
             if(!order) return;
             document.getElementById('orderModalId').textContent = 'Order ID: ' + order.id;
-            var customerName = order.customerName || (JSON.parse(localStorage.getItem('profile')||'{}').name) || localStorage.getItem('checkoutCustomerName') || '';
+            var customerName = order.customerName || (JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'{}').name) || localStorage.getItem('checkoutCustomerName') || '';
             document.getElementById('orderModalCustomer').textContent = customerName ? ('Customer: ' + customerName) : '';
             document.getElementById('orderModalName').textContent = 'Order Date: ' + new Date(order.date).toLocaleString();
             document.getElementById('orderModalEst').textContent = order.est ? ('Est. Delivery: ' + order.est) : '';

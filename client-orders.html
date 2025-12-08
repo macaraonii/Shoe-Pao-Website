@@ -151,6 +151,11 @@
     <script>
     // Render order cards from localStorage.cart (client-side orders page)
     (function(){
+        // Require a signed-in profile for this page — don't allow anonymous viewing of all orders
+        try{
+            var __p_check = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null');
+            if(!__p_check || !__p_check.email){ window.location.href = 'login.html'; return; }
+        }catch(e){ window.location.href = 'login.html'; return; }
         function formatPHP(n){ return 'PHP ' + Number(n).toLocaleString(undefined,{minimumFractionDigits:0}); }
         function titleCase(str){
             if(!str && str !== 0) return '';
@@ -164,7 +169,7 @@
         // Render orders from localStorage.orders (client order history)
         function renderOrders(){
             const orders = JSON.parse(localStorage.getItem('orders')||'[]');
-            const profile = JSON.parse(localStorage.getItem('profile')||'{}') || {};
+            const profile = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'{}') || {};
             const container = document.getElementById('ordersList');
             container.innerHTML='';
             if(!orders || orders.length===0){ container.innerHTML='<div style="color:#666">You have no orders yet.</div>'; return; }
@@ -468,7 +473,7 @@
             if(!order) return;
             document.getElementById('orderModalId').textContent = 'Order ID: ' + order.id;
             // customer name (fall back to saved profile or checkout if order doesn't include it)
-            var customerName = order.customerName || (JSON.parse(localStorage.getItem('profile')||'{}').name) || localStorage.getItem('checkoutCustomerName') || '';
+            var customerName = order.customerName || (JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'{}').name) || localStorage.getItem('checkoutCustomerName') || '';
             document.getElementById('orderModalCustomer').textContent = customerName ? ('Customer: ' + customerName) : '';
             document.getElementById('orderModalName').textContent = 'Order Date: ' + new Date(order.date).toLocaleString();
             // Est. Delivery (order.est may be a human string stored by admin)
@@ -545,13 +550,19 @@
     <script>
     // Navigation bar functions (from profile.html) to match profile header behavior
     function goToHome() { window.location.href = 'home.html'; }
-    function goToProfile() { window.location.href = 'profile.html'; }
+    function goToProfile() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToProductList() { window.location.href = 'product-list.html'; }
     function goToOrders() { window.location.href = 'client-orders.html'; }
     function goToWishlist() { window.location.href = 'wishlist.html'; }
     function goToFAQ() { window.location.href = 'policy.html'; }
     function goToContact() { window.location.href = 'contact.html'; }
-    function goToUserPage() { window.location.href = 'profile.html'; }
+    function goToUserPage() {
+    try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+        window.location.href = 'profile.html';
+    }
     function goToCartPage() { window.location.href = 'cart.html'; }
     function toggleSearchBox() {
         var box = document.getElementById('searchBox');

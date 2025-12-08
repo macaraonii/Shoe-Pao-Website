@@ -16,3 +16,4 @@ Workspaces/**
 *.lock
 
 # Shipped by Lens Studio
+Firebase/*.json

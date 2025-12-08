@@ -188,13 +188,19 @@
         </footer>
         <script>
         // Navigation bar functions
-        function goToProfile() { window.location.href = 'profile.html'; }
+        function goToProfile() {
+            try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+            window.location.href = 'profile.html';
+        }
         function goToProductList() { window.location.href = 'product-list.html'; }
         function goToOrders() { window.location.href = 'client-orders.html'; }
         function goToWishlist() { window.location.href = 'wishlist.html'; }
         function goToFAQ() { window.location.href = 'policy.html'; }
         function goToContact() { window.location.href = 'contact.html'; }
-        function goToUserPage() { window.location.href = 'profile.html'; }
+        function goToUserPage() {
+            try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
+            window.location.href = 'profile.html';
+        }
         function toggleSearchBox() {
             var box = document.getElementById('searchBox');
             box.style.display = (box.style.display === 'block') ? 'none' : 'block';
