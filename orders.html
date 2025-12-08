@@ -576,7 +576,7 @@
             if(row.cancellation && row.cancellation.timestamp){ html += '<div style="color:#666;font-size:0.95rem;margin-bottom:6px;">Submitted: ' + new Date(row.cancellation.timestamp).toLocaleString() + '</div>'; }
             if(row.cancellation && row.cancellation.adminConfirmed){ html += '<div style="color:green;font-weight:600;margin-bottom:6px;">Admin confirmed cancellation</div>'; }
             // if admin revoked the cancellation, show standardized revocation message and reasons
-            if(row.cancellation && row.cancellation.adminRevoked){
+            if(row.cancellation && row.cancellation.adminRevoked && ((row.cancellation.clientConfirmed === true) || (Array.isArray(row.cancellation.reasons) && row.cancellation.reasons.length > 0) || (row.cancellation.revocation && ((Array.isArray(row.cancellation.revocation.reasons) && row.cancellation.revocation.reasons.length > 0) || row.cancellation.revocation.timestamp)))){
                 html += '<div style="color:#b71c1c;font-weight:600;margin-bottom:6px;">Cancel Request Was Revoked</div>';
                 if(row.cancellation.revocation && row.cancellation.revocation.reasons){
                     html += '<div style="margin-bottom:8px;"><strong>Revocation reasons:</strong><ul style="margin-top:6px;padding-left:18px;">';
