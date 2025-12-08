@@ -166,6 +166,30 @@
             }).join('');
         }
 
+        // Determine whether a cancellation revocation message should be shown for this order
+        function isCancellationRevoked(order){
+            try{
+                if(!order || !order.cancellation) return false;
+                var c = order.cancellation;
+                if(c.adminRevoked !== true) return false;
+                // show only if there was an actual client cancellation request (clientConfirmed or reasons)
+                var clientRequested = (c.clientConfirmed === true) || (Array.isArray(c.reasons) && c.reasons.length > 0);
+                // or if the revocation payload itself contains reasons/timestamp
+                var revocationHasInfo = (c.revocation && ((Array.isArray(c.revocation.reasons) && c.revocation.reasons.length > 0) || c.revocation.timestamp));
+                return clientRequested || revocationHasInfo;
+            }catch(e){ return false; }
+        }
+
+        // Find the index of an order in the full orders array by its id
+        function findOrderIndexById(id){
+            try{ var orders = JSON.parse(localStorage.getItem('orders')||'[]'); return orders.findIndex(function(o){ return (o && (o.id||'')) === id; }); }catch(e){ return -1; }
+        }
+
+        // Wrapper helpers that operate by order id (safe when rendering filtered lists)
+        window.openOrderModalById = function(id){ var idx = findOrderIndexById(id); if(idx === -1) return; openOrderModal(idx); }
+        window.requestCancelOrderById = function(id){ var idx = findOrderIndexById(id); if(idx === -1) return; requestCancelOrder(idx); }
+        window.requestRefundOrderById = function(id){ var idx = findOrderIndexById(id); if(idx === -1) return; requestRefundOrder(idx); }
+
         // Return a representative image URL from an order's items (first non-empty image), fallback to placeholder
         function getOrderRepresentativeImage(order){
             try{
@@ -227,11 +251,11 @@
                     <div class="order-card-code-row">Order ${order.id}</div>
                     ${ shortAddr ? ('<div style="padding:6px 18px;color:#666;font-size:0.95rem;">Ship to: ' + shortAddr + '</div>') : '' }
                     ${ order.est ? ('<div style="padding:6px 18px;color:#444;font-size:0.95rem;font-weight:600;">Est. Delivery: ' + order.est + '</div>') : '' }
-                        ${ (order.cancellation && order.cancellation.adminRevoked && (order.cancellation.clientConfirmed || (order.cancellation.reasons && order.cancellation.reasons.length))) ? ('<div style="padding:6px 18px;color:#b71c1c;font-weight:600;">Cancel Request Was Revoked</div>') : '' }
+                        ${ isCancellationRevoked(order) ? ('<div style="padding:6px 18px;color:#b71c1c;font-weight:600;">Cancel Request Was Revoked</div>') : '' }
                         <div class="order-card-btn-row">
-                        <button class="order-card-btn view-btn" onclick="openOrderModal(${idx})">View Order</button>
-                        <button class="order-card-btn cancel-btn" onclick="requestCancelOrder(${idx})">Cancel</button>
-                        <button class="order-card-btn refund-btn" onclick="requestRefundOrder(${idx})">Refund</button>
+                        <button class="order-card-btn view-btn" onclick="openOrderModalById('${order.id}')">View Order</button>
+                        <button class="order-card-btn cancel-btn" onclick="requestCancelOrderById('${order.id}')">Cancel</button>
+                        <button class="order-card-btn refund-btn" onclick="requestRefundOrderById('${order.id}')">Refund</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -534,10 +558,10 @@
             try{
                 var revDiv = document.getElementById('orderModalRevocation');
                 if(revDiv){
-                    if(order.cancellation && order.cancellation.adminRevoked && (order.cancellation.clientConfirmed || (order.cancellation.reasons && order.cancellation.reasons.length))){
-                        var rev = order.cancellation.revocation || order.cancellation.revocation || {};
+                    if(isCancellationRevoked(order)){
+                        var rev = order.cancellation.revocation || {};
                         var reasons = (rev.reasons && rev.reasons.length) ? rev.reasons : (order.cancellation.reasons || []);
-                        var ts = rev.timestamp || order.cancellation.revocation && order.cancellation.revocation.timestamp || '';
+                        var ts = rev.timestamp || (order.cancellation.revocation && order.cancellation.revocation.timestamp) || '';
                         var html = '<div style="font-weight:700;color:#b71c1c;margin-top:6px;">Cancel Request Was Revoked</div>';
                         if(reasons && reasons.length){
                             html += '<div style="color:#444;font-weight:600;margin-top:6px;">Reason(s):</div><ul style="margin:6px 0 0 18px;color:#444;">';
