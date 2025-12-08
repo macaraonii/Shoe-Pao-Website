@@ -166,6 +166,18 @@
             }).join('');
         }
 
+        // Return a representative image URL from an order's items (first non-empty image), fallback to placeholder
+        function getOrderRepresentativeImage(order){
+            try{
+                if(!order || !Array.isArray(order.items)) return 'IMAGE/NIKE1.png';
+                for(var i=0;i<order.items.length;i++){
+                    var it = order.items[i];
+                    if(it && it.image && (''+it.image).trim().length) return it.image;
+                }
+                return 'IMAGE/NIKE1.png';
+            }catch(e){ return 'IMAGE/NIKE1.png'; }
+        }
+
         // Render orders from localStorage.orders (client order history)
         function renderOrders(){
             const orders = JSON.parse(localStorage.getItem('orders')||'[]');
@@ -192,7 +204,7 @@
 
             visibleOrders.forEach((order, idx)=>{
                 const itemCount = order.items.reduce((s,it)=>s + (it.quantity||it.qty||1), 0);
-                const firstImage = (order.items[0] && (order.items[0].image || 'IMAGE/NIKE1.png'));
+                const firstImage = getOrderRepresentativeImage(order);
                 // derive a short shipping snippet for card display
                 var shortAddr = '';
                 if(order.shippingAddress){
@@ -215,7 +227,7 @@
                     <div class="order-card-code-row">Order ${order.id}</div>
                     ${ shortAddr ? ('<div style="padding:6px 18px;color:#666;font-size:0.95rem;">Ship to: ' + shortAddr + '</div>') : '' }
                     ${ order.est ? ('<div style="padding:6px 18px;color:#444;font-size:0.95rem;font-weight:600;">Est. Delivery: ' + order.est + '</div>') : '' }
-                        ${ (order.cancellation && order.cancellation.adminRevoked) ? ('<div style="padding:6px 18px;color:#b71c1c;font-weight:600;">Cancel Request Was Revoked</div>') : '' }
+                        ${ (order.cancellation && order.cancellation.adminRevoked && (order.cancellation.clientConfirmed || (order.cancellation.reasons && order.cancellation.reasons.length))) ? ('<div style="padding:6px 18px;color:#b71c1c;font-weight:600;">Cancel Request Was Revoked</div>') : '' }
                         <div class="order-card-btn-row">
                         <button class="order-card-btn view-btn" onclick="openOrderModal(${idx})">View Order</button>
                         <button class="order-card-btn cancel-btn" onclick="requestCancelOrder(${idx})">Cancel</button>
@@ -472,8 +484,9 @@
             var order = orders[idx];
             if(!order) return;
             document.getElementById('orderModalId').textContent = 'Order ID: ' + order.id;
-            // customer name (fall back to saved profile or checkout if order doesn't include it)
-            var customerName = order.customerName || (JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'{}').name) || localStorage.getItem('checkoutCustomerName') || '';
+            // customer name: prefer currently logged-in profile.name, fall back to order snapshot or checkout fallback
+            var activeProfile = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'{}') || {};
+            var customerName = (activeProfile && activeProfile.name) ? activeProfile.name : (order.customerName || localStorage.getItem('checkoutCustomerName') || '');
             document.getElementById('orderModalCustomer').textContent = customerName ? ('Customer: ' + customerName) : '';
             document.getElementById('orderModalName').textContent = 'Order Date: ' + new Date(order.date).toLocaleString();
             // Est. Delivery (order.est may be a human string stored by admin)
@@ -501,7 +514,7 @@
                 else if(order.deliveryCode === 'jnt') deliveryLabel = 'J&T Express';
             }
             document.getElementById('orderModalDelivery').textContent = deliveryLabel ? ('Delivery: ' + deliveryLabel) : '';
-            document.getElementById('orderModalImg').src = (order.items[0] && order.items[0].image) || 'IMAGE/NIKE1.png';
+            document.getElementById('orderModalImg').src = getOrderRepresentativeImage(order);
             // items list
             var itemsHtml = '';
             order.items.forEach(function(it){
@@ -521,7 +534,7 @@
             try{
                 var revDiv = document.getElementById('orderModalRevocation');
                 if(revDiv){
-                    if(order.cancellation && order.cancellation.adminRevoked){
+                    if(order.cancellation && order.cancellation.adminRevoked && (order.cancellation.clientConfirmed || (order.cancellation.reasons && order.cancellation.reasons.length))){
                         var rev = order.cancellation.revocation || order.cancellation.revocation || {};
                         var reasons = (rev.reasons && rev.reasons.length) ? rev.reasons : (order.cancellation.reasons || []);
                         var ts = rev.timestamp || order.cancellation.revocation && order.cancellation.revocation.timestamp || '';
