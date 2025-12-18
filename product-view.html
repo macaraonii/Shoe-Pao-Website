@@ -726,7 +726,8 @@
         .cart-item-remove {
             position: absolute;
             top: 8px;
-            right: 44px;
+            /* position computed from CSS variables in .cart-item-box so spacing matches the edit button */
+            right: calc(var(--edit-gap) + var(--edit-width) + var(--edit-gap));
             background: none;
             border: none;
             cursor: pointer;
@@ -1342,19 +1343,18 @@
             <div class="productview-caption">Delivery/shipping calculated at checkout.</div>
             <div class="productview-size-label">Select Size</div>
             <div class="productview-size-row">
-                <select id="sizeSelect" class="productview-size-dropdown" onchange="selectSize(this)">
-                    <option value="">Select size (EU)</option>
-                    <option value="36">36 EU</option>
-                    <option value="37">37 EU</option>
-                    <option value="38">38 EU</option>
-                    <option value="39">39 EU</option>
-                    <option value="40">40 EU</option>
-                    <option value="41">41 EU</option>
-                    <option value="42">42 EU</option>
-                    <option value="43">43 EU</option>
-                    <option value="44">44 EU</option>
-                    <option value="45">45 EU</option>
-                </select>
+                <div id="sizeButtons" style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <button type="button" class="btn ghost product-size-btn" data-eu="36">36 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="37">37 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="38">38 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="39">39 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="40">40 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="41">41 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="42">42 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="43">43 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="44">44 EU</button>
+                    <button type="button" class="btn ghost product-size-btn" data-eu="45">45 EU</button>
+                </div>
             </div>
             <div class="productview-size-conversion" id="sizeConversion">Select a size to see the US equivalent.</div>
             <div id="sizeStock" class="productview-size-stock"></div>
@@ -1785,6 +1785,40 @@ On page.</div>
         }
     }
 
+    // Update the size buttons' enabled/disabled state based on inventory for this product
+    function updateSizeButtons(){
+        try{
+            var btns = document.querySelectorAll('#sizeButtons .product-size-btn');
+            if(!btns || !btns.length) return;
+            var inv = JSON.parse(localStorage.getItem('inventory') || '[]');
+            var title = (localStorage.getItem('productTitle') || (document.getElementById('productTitle') && document.getElementById('productTitle').textContent) || '').trim();
+            var brand = (localStorage.getItem('productBrand') || (document.getElementById('productBrand') && document.getElementById('productBrand').textContent) || '').trim();
+            var found = null;
+            if (Array.isArray(inv) && inv.length) {
+                found = inv.find(function(i){ return (i.name||'').toString().trim() === title; });
+                if(!found){ found = inv.find(function(i){ return title && (i.name||'').toString().toLowerCase().indexOf(title.toLowerCase()) !== -1; }); }
+                if(!found && brand){ found = inv.find(function(i){ return (i.brand||'').toString().toLowerCase() === brand.toLowerCase(); }); }
+            }
+            btns.forEach(function(b){
+                try{
+                    var eu = b.getAttribute('data-eu');
+                    var qty = (found && found.sizes && (found.sizes[eu] !== undefined)) ? Number(found.sizes[eu]) : null;
+                    // clear previous state classes
+                    b.classList.remove('low-stock','oos');
+                    if(qty === null){
+                        b.disabled = false;
+                    } else if(qty <= 0){
+                        b.disabled = true;
+                        b.classList.add('oos');
+                    } else {
+                        b.disabled = false;
+                        if(qty < 6){ b.classList.add('low-stock'); }
+                    }
+                }catch(ee){}
+            });
+        }catch(e){}
+    }
+
     // Load product data from localStorage
     window.addEventListener('DOMContentLoaded', function() {
         var brand = localStorage.getItem('productBrand');
@@ -1797,6 +1831,26 @@ On page.</div>
         if (price) document.getElementById('productPrice').textContent = price;
         var mainImgEl = document.getElementById('mainShoeImg');
         if (img) mainImgEl.src = img;
+        // wire up size buttons to behave like the edit modal size buttons
+            try{
+            var sizeButtons = document.querySelectorAll('#sizeButtons .product-size-btn');
+            sizeButtons.forEach(function(b){
+                b.addEventListener('click', function(){
+                    if(b.disabled) return; // respect disabled state
+                    // remove primary from all buttons but preserve other state classes (low-stock/oos)
+                    sizeButtons.forEach(function(x){ x.classList.remove('primary'); x.classList.add('ghost'); });
+                    // mark this as primary and remove ghost
+                    b.classList.remove('ghost');
+                    b.classList.add('primary');
+                    // run existing select logic
+                    selectSize(b);
+                });
+            });
+            // initialize availability and pre-selection
+            updateSizeButtons();
+            var sel = document.querySelector('#sizeButtons .product-size-btn.primary');
+            if(!sel){ /* no-op */ } else { selectSize(sel); }
+        }catch(e){}
         // If the product is a Nike, flip main image and thumbnails horizontally to match product-list
         try {
             if (brand && brand.toString().toLowerCase().indexOf('nike') !== -1) {
@@ -1827,8 +1881,10 @@ On page.</div>
     window.addEventListener('storage', function(e){
         try {
             if (e.key === 'inventory') {
-                var sel = document.getElementById('sizeSelect');
-                if (sel) selectSize(sel);
+                // refresh size buttons availability and re-run select logic for current selection
+                updateSizeButtons();
+                var btn = document.querySelector('#sizeButtons .product-size-btn.primary');
+                if (btn) selectSize(btn);
             }
         } catch (ex) { }
     });
@@ -2108,10 +2164,10 @@ On page.</div>
             const addToCartBtn = document.querySelector('.productview-cart-btn');
             if (addToCartBtn) {
                 addToCartBtn.addEventListener('click', function(e){
-                    // Read selected EU size from the dropdown (if present)
-                    var sizeSelect = document.getElementById('sizeSelect');
+                    // Read selected EU size from the size buttons (if present)
+                    var selectedBtn = document.querySelector('#sizeButtons .product-size-btn.primary');
                     var selectedEU = '';
-                    if (sizeSelect) selectedEU = (sizeSelect.value || '').toString().trim();
+                    if (selectedBtn) selectedEU = (selectedBtn.getAttribute('data-eu') || '').toString().trim();
 
                     // If no size selected, prevent adding and show an inline hint
                     var elStock = document.getElementById('sizeStock');

@@ -116,6 +116,9 @@
     align-items: flex-start;
     position: relative;
 }
+
+/* Layout variables for cart action buttons. Adjust these to control spacing. */
+.cart-item-box { --edit-gap:6px; --edit-width:56px; }
 .cart-item-img {
     width: 72px;
     height: 72px;
@@ -167,7 +170,8 @@
 .cart-item-remove {
     position: absolute;
     top: 8px;
-    right: 44px;
+    /* moved slightly left so Edit can appear to the right of the trash */
+    right: 72px;
     background: none;
     border: none;
     cursor: pointer;
@@ -327,6 +331,28 @@
     font-size: 1.08rem;
     margin: 32px 0;
 }
+/* Global small button styles used across modals and cart edit UI */
+.btn{ font-family: 'Poppins', Arial, sans-serif; padding:8px 10px; border-radius:8px; border:none; cursor:pointer; font-size:0.95rem; }
+.btn.ghost{ background:#fff; border:1px solid #ddd; color:#222; }
+.btn.primary{ background:#222; color:#fff; border:0; }
+/* Low-stock should show orange only when NOT selected. When selected (primary) the button becomes the primary color. */
+.btn.low-stock:not(.primary){ background: #ff9800; color: #fff; border-color: #e67e22; }
+.btn:disabled{ opacity:0.45; cursor:not-allowed; }
+
+/* Low-stock (warning) and out-of-stock states for size buttons
+    Only apply the orange low-stock styling when the button is NOT selected
+    (i.e. doesn't have the .primary class). This prevents low-stock from
+    overriding the primary selected state. */
+.btn.low-stock:not(.primary){ background: #ff9800; color: #fff; border-color: #e67e22; }
+.btn.low-stock:not(.primary):hover{ filter: brightness(0.95); }
+.btn.oos{ opacity: 0.45; text-decoration: line-through; pointer-events: none; }
+
+/* Ensure remove (trash) icon has space from edit button and doesn't overlap */
+.cart-item-remove { position: absolute; top: 8px; right: calc(var(--edit-gap) + var(--edit-width) + var(--edit-gap)); width: 28px; height: 28px; }
+
+/* Position the Edit button between the trash icon and the right border using variables above */
+.cart-item-edit { position: absolute; top: 8px; right: var(--edit-gap); width: var(--edit-width); padding:6px 10px; border-radius:8px; }
+
 .cart-subtotal-row {
     display: flex;
     justify-content: space-between;

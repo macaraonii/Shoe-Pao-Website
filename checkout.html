@@ -1405,6 +1405,14 @@
             var paymentLabel = paymentEl ? paymentEl.textContent.trim() : '';
             if(paymentLabel) localStorage.setItem('checkoutPayment', paymentLabel);
         }catch(e){}
+        // Ensure payment code is persisted (in case user didn't toggle selection during this session)
+        try{
+            var selPay = document.querySelector('.checkout-payment-option.selected') || document.querySelector('.checkout-payment-option[aria-checked="true"]') || document.querySelector('.checkout-payment-option');
+            if(selPay){
+                var pc = selPay.dataset && selPay.dataset.code ? selPay.dataset.code : (selPay.querySelector('input[type="radio"]') ? selPay.querySelector('input[type="radio"]').value : '');
+                if(pc) localStorage.setItem('checkoutPaymentCode', pc);
+            }
+        }catch(e){}
         try{
             // prefer the active profile's name when available
             var profile = (function(){ try{ return JSON.parse(sessionStorage.getItem('profile') || localStorage.getItem('profile') || '{}'); }catch(e){ return {}; } })();

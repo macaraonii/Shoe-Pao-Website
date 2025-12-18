@@ -387,7 +387,6 @@
             </div>
 
             <div id="codInstructions" style="display:none;">
-                <div class="payment-divider"></div>
                 <div class="payment-method-title">Cash on Delivery</div>
                 <div class="payment-method-list">
                     <ul>
@@ -516,8 +515,15 @@
     function generatePaymentQRUrl(payload, size){
         try{
             size = Number(size) || 220;
-            // keep payload short and non-sensitive; include timestamp if not provided
             if(!payload) payload = 'SHOEPAO:' + Date.now();
+            // Prefer local generation (offline) if available
+            try{
+                if(typeof generatePaymentQRCodeDataUrl === 'function'){
+                    var dataUrl = generatePaymentQRCodeDataUrl(payload, size);
+                    if(dataUrl) return dataUrl;
+                }
+            }catch(err){ /* continue to external fallback */ }
+            // Fallback: external QR API (used only when local generation isn't available)
             return 'https://api.qrserver.com/v1/create-qr-code/?size=' + encodeURIComponent(size + 'x' + size) + '&data=' + encodeURIComponent(payload) + '&_=' + Date.now();
         }catch(e){ return '' }
     }
@@ -570,6 +576,9 @@
                 if(bankActions) bankActions.style.display = 'none';
                 if(bankDetailsInline) bankDetailsInline.style.display = 'none';
                 if(codEl) codEl.style.display = 'none';
+                // hide the top caption (bank-transfer guidance) when COD is selected
+                var payCaption = document.querySelector('.payment-caption');
+                if(payCaption) payCaption.style.display = (code === 'cod') ? 'none' : '';
                 // show based on code
                 if(code === 'qr_ph'){
                     if(qrEl) qrEl.style.display = '';
@@ -582,14 +591,14 @@
                             var qrImg = document.getElementById('paymentQRImage');
                             var storedQR = localStorage.getItem('checkoutQR');
                             if(qrImg){
-                                if(storedQR){
-                                    qrImg.src = storedQR;
-                                } else {
-                                    // generate a short, non-sensitive payload for the QR
-                                    var payload = localStorage.getItem('checkoutPaymentPayload') || ('SHOEPAO:' + Date.now());
-                                    var generated = generatePaymentQRUrl(payload, 240);
-                                    if(generated) qrImg.src = generated;
-                                }
+                                                if(storedQR){
+                                                    qrImg.src = storedQR;
+                                                } else {
+                                                    // generate a short, non-sensitive payload for the QR
+                                                    var payload = localStorage.getItem('checkoutPaymentPayload') || ('SHOEPAO:' + Date.now());
+                                                    var generated = generatePaymentQRUrl(payload, 240);
+                                                    if(generated) qrImg.src = generated;
+                                                }
                                 qrImg.style.display = '';
                                 // on error, attempt a packaged image once; otherwise show the fallback message
                                 qrImg.onerror = function(){
@@ -690,6 +699,9 @@
                     if(bankActions) bankActions.style.display = 'none';
                     if(bankDetailsInline) bankDetailsInline.style.display = 'none';
                     if(codEl) codEl.style.display = 'none';
+                    // hide the top caption (bank-transfer guidance) when COD is selected
+                    var payCaption = document.querySelector('.payment-caption');
+                    if(payCaption) payCaption.style.display = (code === 'cod') ? 'none' : '';
                     if(code === 'qr_ph'){
                         if(qrEl) qrEl.style.display = '';
                         if(bankActions) bankActions.style.display = '';
