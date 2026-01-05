@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Footwear Inventory Manager</title>
+  <link rel="stylesheet" href="inventory-app.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Footwear Inventory Manager</h1>
+    <div class="header-actions">
+      <button id="addProductBtn" class="primary">Add Product</button>
+      <div class="searchbar">
+        <input id="searchInput" type="text" placeholder="Search brand, model, color, size" />
+        <select id="filterBrand"><option value="">All Brands</option></select>
+        <select id="filterCategory"><option value="">All Categories</option></select>
+        <select id="filterSize"><option value="">Any Size</option></select>
+        <select id="filterStock"><option value="">Any Stock</option><option value="low">Low</option><option value="out">Out</option><option value="in">In</option></select>
+        <select id="filterStatus"><option value="">All Status</option><option value="active">Active</option><option value="archived">Archived</option></select>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button data-tab="inventory" class="active">Inventory</button>
+      <button data-tab="sales">Sales</button>
+      <button data-tab="reports">Reports</button>
+      <button data-tab="alerts">Alerts</button>
+      <button data-tab="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="tab-inventory" class="tab active">
+      <div class="bulk-actions">
+        <label><input type="checkbox" id="toggleBulkSelect" /> Bulk select</label>
+        <button id="selectAllBtn" class="secondary">Select All</button>
+        <span class="muted">Selected: <strong id="selectedCount">0</strong></span>
+        <button id="bulkEditPrice" class="secondary">Bulk Update Price</button>
+        <button id="bulkRestock" class="secondary">Bulk Restock</button>
+        <button id="bulkArchive" class="secondary">Archive Selected</button>
+        <button id="bulkUnarchive" class="secondary">Unarchive Selected</button>
+      </div>
+      <table class="products-table">
+        <colgroup>
+          <col style="width:36px" />
+          <col style="width:14%" />
+          <col style="width:10%" />
+          <col style="width:14%" />
+          <col style="width:12%" />
+          <col style="width:10%" />
+          <col />
+          <col style="width:10%" />
+          <col style="width:10%" />
+          <col style="width:12%" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="bulk-col"></th>
+            <th>Brand</th>
+            <th>SKU</th>
+            <th>Model</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th class="colors-col">Colors</th>
+            <th>Total Stock</th>
+            <th>Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productsTbody"></tbody>
+      </table>
+    </section>
+
+    <section id="tab-sales" class="tab">
+      <div class="sales-entry">
+        <h2>Record Sale</h2>
+        <div class="form-grid">
+          <select id="saleProduct"></select>
+          <select id="saleColor"></select>
+          <select id="saleSize"></select>
+          <input id="saleQty" type="number" min="1" value="1" placeholder="Qty" />
+          <input id="salePrice" type="number" min="0" step="0.01" placeholder="Sale Price" />
+          <button id="recordSaleBtn" class="primary">Record Sale</button>
+        </div>
+      </div>
+      <div class="sales-log">
+        <h2>Sales Log</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Brand</th><th>Model</th><th>Color</th><th>Size</th><th>Qty</th><th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="salesTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-reports" class="tab">
+      <div class="reports-controls">
+        <label>Timeframe
+          <select id="reportsTimeframe">
+            <option value="all">All Time</option>
+            <option value="30d">Last 30 days</option>
+            <option value="7d">Last 7 days</option>
+          </select>
+        </label>
+      </div>
+      <div class="reports-grid">
+        <div class="card">
+          <div class="header-line">
+            <h3>Overview</h3>
+          </div>
+          <ul id="overviewList" class="kpi-list"></ul>
+        </div>
+        <div class="card">
+          <div class="header-line">
+            <h3>Low Stock</h3>
+            <button class="link" data-report-toggle="low">Show details</button>
+          </div>
+          <p id="lowStockSummary" class="summary"></p>
+          <ul id="lowStockList" class="collapsible"></ul>
+        </div>
+        <div class="card">
+          <div class="header-line">
+            <h3>Best-Selling Sizes</h3>
+            <button class="link" data-report-toggle="sizes">Show details</button>
+          </div>
+          <p id="bestSizesSummary" class="summary"></p>
+          <ul id="bestSizesList" class="collapsible"></ul>
+        </div>
+        <div class="card">
+          <div class="header-line">
+            <h3>Best-Selling Brands</h3>
+            <button class="link" data-report-toggle="brands">Show details</button>
+          </div>
+          <p id="bestBrandsSummary" class="summary"></p>
+          <ul id="bestBrandsList" class="collapsible"></ul>
+        </div>
+        <div class="card">
+          <div class="header-line">
+            <h3>Dead Stock</h3>
+            <button class="link" data-report-toggle="dead">Show details</button>
+          </div>
+          <p id="deadStockSummary" class="summary"></p>
+          <ul id="deadStockList" class="collapsible"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-alerts" class="tab">
+      <h2>Alerts</h2>
+      <ul id="alertsList"></ul>
+    </section>
+
+    <section id="tab-settings" class="tab">
+      <h2>Settings</h2>
+      <label>Low-stock threshold
+        <input id="lowStockThreshold" type="number" min="1" value="3" />
+      </label>
+      <button id="saveSettingsBtn" class="primary">Save Settings</button>
+    </section>
+  </main>
+
+  <!-- Product Modal -->
+  <dialog id="productModal" class="modal">
+    <form method="dialog" id="productForm">
+      <h2 id="productModalTitle">Add Product</h2>
+      <div class="form-grid">
+        <input id="prodBrand" placeholder="Brand" required />
+        <input id="prodModel" placeholder="Model" required />
+        <input id="prodCategory" placeholder="Category" />
+        <input id="prodSKU" placeholder="SKU (auto: SP-BBB-MMMM-XXXX)" readonly />
+        <select id="prodStatus">
+          <option value="active">Active</option>
+          <option value="archived">Archived</option>
+        </select>
+        <input id="priceOriginal" type="number" min="0" step="0.01" placeholder="Original Price" required />
+        <input id="priceSale" type="number" min="0" step="0.01" placeholder="Sale Price" />
+        <input id="priceCost" type="number" min="0" step="0.01" placeholder="Cost" />
+        <textarea id="prodDescription" placeholder="Description (optional)" rows="3"></textarea>
+      </div>
+      <div id="imagesSection">
+        <h3>Images</h3>
+        <div class="images-controls">
+          <input id="imageFileInput" type="file" accept="image/*" multiple />
+          <button id="importImageBtn" class="secondary" type="button">Import</button>
+        </div>
+        <div id="imagesList" class="images-list"></div>
+      </div>
+      <div id="initialVariantSection">
+        <h3>Initial Color & Sizes</h3>
+        <div class="variant-controls">
+          <input id="initialColorName" placeholder="Color name" />
+          <input id="initialColorCode" type="color" />
+          <button id="addInitialColorBtn" class="secondary" type="button">Add Color</button>
+        </div>
+        <div id="initialColorsList" class="colors-list"></div>
+        <div id="initialSizesEditor" class="sizes-editor"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancelProductBtn" value="cancel" class="secondary">Cancel</button>
+        <button id="saveProductBtn" value="default" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Variant Modal -->
+  <dialog id="variantModal" class="modal">
+    <form method="dialog" id="variantForm">
+      <h2>Manage Variants</h2>
+      <div class="variant-controls">
+        <input id="variantColorName" placeholder="Color name" />
+        <input id="variantColorCode" type="color" />
+        <button id="addColorBtn" class="secondary" type="button">Add Color</button>
+      </div>
+      <div id="variantColorsList" class="colors-list"></div>
+      <div id="sizesEditor" class="sizes-editor"></div>
+      <div class="modal-actions">
+        <button value="cancel" class="secondary">Close</button>
+        <button id="saveVariantsBtn" value="default" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Bulk Price Modal -->
+  <dialog id="bulkPriceModal" class="modal">
+    <form method="dialog" id="bulkPriceForm">
+      <h2>Bulk Update Price</h2>
+      <div class="form-grid">
+        <label>
+          Field
+          <select id="bulkPriceField">
+            <option value="original">Original</option>
+            <option value="sale">Sale</option>
+            <option value="cost">Cost</option>
+          </select>
+        </label>
+        <label>
+          Method
+          <select id="bulkPriceMethod">
+            <option value="set">Set to value</option>
+            <option value="inc_pct">Increase by %</option>
+            <option value="dec_pct">Decrease by %</option>
+            <option value="inc_num">Increase by amount</option>
+            <option value="dec_num">Decrease by amount</option>
+          </select>
+        </label>
+        <input id="bulkPriceValue" type="number" step="0.01" placeholder="Value (e.g., 100 or 10%)" />
+      </div>
+      <div class="modal-actions">
+        <button value="cancel" class="secondary">Cancel</button>
+        <button id="applyBulkPriceBtn" value="default" class="primary">Apply</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Bulk Restock Modal -->
+  <dialog id="bulkRestockModal" class="modal">
+    <form method="dialog" id="bulkRestockForm">
+      <h2>Bulk Restock</h2>
+      <div class="form-grid">
+        <label>
+          Scope
+          <select id="bulkRestockScope">
+            <option value="all">All sizes</option>
+            <option value="low">Only low stock</option>
+            <option value="out">Only out of stock</option>
+            <option value="size">Specific size</option>
+          </select>
+        </label>
+        <input id="bulkRestockSize" type="number" min="35" max="45" step="1" placeholder="EU size (35–45)" />
+        <input id="bulkRestockQty" type="number" min="0" step="1" placeholder="Quantity to add" />
+      </div>
+      <div class="modal-actions">
+        <button value="cancel" class="secondary">Cancel</button>
+        <button id="applyBulkRestockBtn" value="default" class="primary">Apply</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="inventory-app.js"></script>
+</body>
+</html>
