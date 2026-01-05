@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -6,56 +7,28 @@
     <title>Shoe Pao — Inventory</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="inventory-app.css" />
     <style>
-        :root{--accent:#b71c1c;--muted:#666;--page-bg:#fafafa}
-        body{font-family:'Poppins',Arial,sans-serif;margin:0;background:var(--page-bg);color:#222}
-        .topbar{background:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #eee;position:sticky;top:0;z-index:50}
-        .nav-left{display:flex;align-items:center;gap:22px;width:70%;max-width:820px}
-        .nav-left-inner{display:flex;align-items:center;justify-content:space-between;width:100%}
-        .logo-wrap{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
-        .logo-wrap img{height:40px}
-        .site-title{font-weight:600;color:var(--accent);font-size:1.05rem}
-        .nav-item{font-size:0.98rem;font-weight:500;color:#222;cursor:pointer;text-decoration:none;padding:8px 12px;border-radius:6px}
-        .nav-item:hover{color:var(--accent)}
-        .nav-right{display:flex;align-items:center;gap:12px}
-        .profile-btn{background:none;border:0;padding:6px;cursor:pointer}
-        .profile-btn img{width:34px;height:34px}
-    .container{max-width:1200px;margin:26px auto;padding:20px}
-    .page-title{font-size:2rem;font-weight:700;margin-bottom:8px}
-    .sub{color:var(--muted);margin-bottom:18px}
-    .card{background:#fff;border:1px solid #eee;border-radius:12px;padding:18px}
-    .low-stock{color:#c62828;font-weight:700}
-    .size-input{width:56px;padding:6px;border-radius:6px;border:1px solid #e6e6e6;text-align:center}
-    .inline-input{width:100%;padding:6px;border-radius:6px;border:1px solid #e6e6e6}
-    .action-btn{background:none;border:0;cursor:pointer;padding:6px 8px;margin-left:6px}
-    .table-top{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-    .search-input{flex:1;padding:10px 14px;border:1px solid #e6e6e6;border-radius:8px;font-family:'Poppins',Arial,sans-serif}
-    .filter-btn{padding:8px 12px;border-radius:18px;border:1px solid #ddd;background:#fff;cursor:pointer}
-    .inventory-table{width:100%;border-collapse:collapse;font-family:'Poppins',Arial,sans-serif}
-    /* Show vertical and horizontal grid lines between cells */
-    .inventory-table th, .inventory-table td{border:1px solid #e8e8e8}
-    /* Remove internal vertical lines for the top Size Stock group row; keep only a bottom border */
-    .inventory-table thead tr.group-row th{border:none;padding:10px 8px}
-    .inventory-table thead tr.group-row th[colspan]{border-bottom:1px solid #e8e8e8}
-    /* Header row alignment tweaks: keep group label centered and size numbers aligned with columns */
-    .inventory-table th{background:transparent;padding:10px 8px;text-align:left;color:#444;vertical-align:middle}
-    .inventory-table td{padding:8px 10px;color:#333}
-    .size-col{width:48px;text-align:center;padding:8px 6px}
-    /* make the Size Stock label slightly bolder and centered within its colspan */
-    .size-stock-label{display:block;text-align:center;font-weight:700;color:#666;margin-bottom:6px}
-    .actions-col{white-space:nowrap}
-    .view-archive-row{margin-top:18px;display:flex;justify-content:space-between;align-items:center}
-    .btn-black{background:#222;color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
-    .size-stock-label{display:block;text-align:center;font-weight:600;color:#666;margin-bottom:6px}
-    .small-muted{color:#777;font-size:0.95rem}
-    .post-field{display:flex;flex-direction:column;gap:8px;width:100%}
-    /* make inputs/selects fill their column and have consistent sizing */
-    .post-field .inline-input, .post-field select, .post-field .filter-btn { box-sizing:border-box;width:100%; }
-    /* keep the image preview box from stretching vertically and align it to the top */
-    #new_image_preview_wrap{align-self:flex-start}
+        :root{ --accent:#b71c1c; --page-bg:#ffffff; }
+        /* Match site font and light theme */
+        body{ font-family:'Poppins',Arial,sans-serif; background:var(--page-bg); color:#000; }
+        /* Override inventory app theme to fit site colors */
+        :root {
+            --bg: var(--page-bg);
+            --panel: #ffffff;
+            --muted: #666666;
+            --text: #000000;
+            --primary: #b71c1c; /* site accent */
+            --primary-700: #8e1515;
+            --danger: #e14d4d;
+            --ok: #2ecc71;
+            --warning: #f5a623;
+            --border: #e6e6e6;
+        }
     </style>
 </head>
 <body>
+    <!-- Keep the site navigation bar -->
     <header class="topbar">
         <div class="nav-left">
             <div class="nav-left-inner">
@@ -76,329 +49,280 @@
         </div>
     </header>
 
-    <main class="container">
-        <div class="page-title">Inventory</div>
-        <div class="sub">Monitor and manage the current stock of all shoes listed.</div>
-
-        <div class="card">
-            <div class="table-top">
-                <input id="inventorySearch" class="search-input" placeholder="Search by Name / Brand / ID / Size" />
-                <button class="filter-btn" data-sort="brand">Brand ▾</button>
-                <button class="filter-btn" data-sort="size">Size ▾</button>
-                <button class="filter-btn" data-sort="price">Price ▾</button>
+    <!-- New Inventory App -->
+    <header class="app-header">
+        <h1>Footwear Inventory Manager</h1>
+        <div class="header-actions">
+            <button id="addProductBtn" class="primary">Add Product</button>
+            <div class="searchbar">
+                <input id="searchInput" type="text" placeholder="Search brand, model, color, size" />
+                <select id="filterBrand"><option value="">All Brands</option></select>
+                <select id="filterCategory"><option value="">All Categories</option></select>
+                <select id="filterSize"><option value="">Any Size</option></select>
+                <select id="filterStock"><option value="">Any Stock</option><option value="low">Low</option><option value="out">Out</option><option value="in">In</option></select>
+                <select id="filterStatus"><option value="">All Status</option><option value="active">Active</option><option value="archived">Archived</option></select>
             </div>
+        </div>
+        <nav class="tabs">
+            <button data-tab="inventory" class="active">Inventory</button>
+            <button data-tab="sales">Sales</button>
+            <button data-tab="reports">Reports</button>
+            <button data-tab="alerts">Alerts</button>
+            <button data-tab="settings">Settings</button>
+        </nav>
+    </header>
 
-            <div style="overflow:auto;">
-                <table class="inventory-table" id="inventoryTable">
+    <main>
+        <section id="tab-inventory" class="tab active">
+            <div class="bulk-actions">
+                <label><input type="checkbox" id="toggleBulkSelect" /> Bulk select</label>
+                <button id="selectAllBtn" class="secondary">Select All</button>
+                <span class="muted">Selected: <strong id="selectedCount">0</strong></span>
+                <button id="bulkEditPrice" class="secondary">Bulk Update Price</button>
+                <button id="bulkRestock" class="secondary">Bulk Restock</button>
+                <button id="bulkArchive" class="secondary">Archive Selected</button>
+                <button id="bulkUnarchive" class="secondary">Unarchive Selected</button>
+            </div>
+            <table class="products-table">
+                <colgroup>
+                    <col style="width:36px" />
+                    <col style="width:14%" />
+                    <col style="width:10%" />
+                    <col style="width:14%" />
+                    <col style="width:12%" />
+                    <col style="width:10%" />
+                    <col />
+                    <col style="width:10%" />
+                    <col style="width:10%" />
+                    <col style="width:12%" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="bulk-col"></th>
+                        <th>Brand</th>
+                        <th>SKU</th>
+                        <th>Model</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th class="colors-col">Colors</th>
+                        <th>Total Stock</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTbody"></tbody>
+            </table>
+        </section>
+
+        <section id="tab-sales" class="tab">
+            <div class="sales-entry">
+                <h2>Record Sale</h2>
+                <div class="form-grid">
+                    <select id="saleProduct"></select>
+                    <select id="saleColor"></select>
+                    <select id="saleSize"></select>
+                    <input id="saleQty" type="number" min="1" value="1" placeholder="Qty" />
+                    <input id="salePrice" type="number" min="0" step="0.01" placeholder="Sale Price" />
+                    <button id="recordSaleBtn" class="primary">Record Sale</button>
+                </div>
+            </div>
+            <div class="sales-log">
+                <h2>Sales Log</h2>
+                <table>
                     <thead>
-                        <!-- top group row: Size Stock sits above the size number headers; other columns left blank to keep main headers aligned -->
-                        <tr class="group-row">
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th colspan="10" style="text-align:center"><span class="size-stock-label">Size Stock</span></th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                        <!-- main header row: all column names including size numbers are on the same line -->
                         <tr>
-                            <th>Product ID</th>
-                            <th>Product Name</th>
-                            <th>Brand</th>
-                            <th>Color</th>
-                            <th class="size-col">36</th>
-                            <th class="size-col">37</th>
-                            <th class="size-col">38</th>
-                            <th class="size-col">39</th>
-                            <th class="size-col">40</th>
-                            <th class="size-col">41</th>
-                            <th class="size-col">42</th>
-                            <th class="size-col">43</th>
-                            <th class="size-col">44</th>
-                            <th class="size-col">45</th>
-                            <th>Price</th>
-                            <th>Actions</th>
+                            <th>Date</th><th>Brand</th><th>Model</th><th>Color</th><th>Size</th><th>Qty</th><th>Total</th>
                         </tr>
                     </thead>
-                    <tbody id="inventoryTbody">
-                    </tbody>
+                    <tbody id="salesTbody"></tbody>
                 </table>
             </div>
+        </section>
 
-            <div class="view-archive-row">
-                <div>
-                    <button class="btn-black" id="viewArchiveBtn">View Archived Products</button>
+        <section id="tab-reports" class="tab">
+            <div class="reports-controls">
+                <label>Timeframe
+                    <select id="reportsTimeframe">
+                        <option value="all">All Time</option>
+                        <option value="30d">Last 30 days</option>
+                        <option value="7d">Last 7 days</option>
+                    </select>
+                </label>
+            </div>
+            <div class="reports-grid">
+                <div class="card">
+                    <div class="header-line">
+                        <h3>Overview</h3>
+                    </div>
+                    <ul id="overviewList" class="kpi-list"></ul>
                 </div>
-                <div>
-                    <button id="postNewProductBtn" class="btn-black">Post New Product</button>
+                <div class="card">
+                    <div class="header-line">
+                        <h3>Low Stock</h3>
+                        <button class="link" data-report-toggle="low">Show details</button>
+                    </div>
+                    <p id="lowStockSummary" class="summary"></p>
+                    <ul id="lowStockList" class="collapsible"></ul>
+                </div>
+                <div class="card">
+                    <div class="header-line">
+                        <h3>Best-Selling Sizes</h3>
+                        <button class="link" data-report-toggle="sizes">Show details</button>
+                    </div>
+                    <p id="bestSizesSummary" class="summary"></p>
+                    <ul id="bestSizesList" class="collapsible"></ul>
+                </div>
+                <div class="card">
+                    <div class="header-line">
+                        <h3>Best-Selling Brands</h3>
+                        <button class="link" data-report-toggle="brands">Show details</button>
+                    </div>
+                    <p id="bestBrandsSummary" class="summary"></p>
+                    <ul id="bestBrandsList" class="collapsible"></ul>
+                </div>
+                <div class="card">
+                    <div class="header-line">
+                        <h3>Dead Stock</h3>
+                        <button class="link" data-report-toggle="dead">Show details</button>
+                    </div>
+                    <p id="deadStockSummary" class="summary"></p>
+                    <ul id="deadStockList" class="collapsible"></ul>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section id="tab-alerts" class="tab">
+            <h2>Alerts</h2>
+            <ul id="alertsList"></ul>
+        </section>
+
+        <section id="tab-settings" class="tab">
+            <h2>Settings</h2>
+            <label>Low-stock threshold
+                <input id="lowStockThreshold" type="number" min="1" value="3" />
+            </label>
+            <button id="saveSettingsBtn" class="primary">Save Settings</button>
+        </section>
     </main>
 
-    <!-- Post New Product Modal -->
-    <div id="postProductOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
-        <div style="background:#fff;width:720px;max-width:95vw;border-radius:12px;padding:18px;box-shadow:0 12px 48px rgba(0,0,0,0.3);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <strong style="font-size:1.1rem">Post New Product</strong>
-                <button onclick="closePostProductModal()" style="background:none;border:0;cursor:pointer;font-size:1.1rem">✕</button>
+    <!-- Product Modal -->
+    <dialog id="productModal" class="modal">
+        <form method="dialog" id="productForm">
+            <h2 id="productModalTitle">Add Product</h2>
+            <div class="form-grid">
+                <input id="prodBrand" placeholder="Brand" required />
+                <input id="prodModel" placeholder="Model" required />
+                <input id="prodCategory" placeholder="Category" />
+                <input id="prodSKU" placeholder="SKU (auto: SP-BBB-MMMM-XXXX)" readonly />
+                <select id="prodStatus">
+                    <option value="active">Active</option>
+                    <option value="archived">Archived</option>
+                </select>
+                <input id="priceOriginal" type="number" min="0" step="0.01" placeholder="Original Price" required />
+                <input id="priceSale" type="number" min="0" step="0.01" placeholder="Sale Price" />
+                <input id="priceCost" type="number" min="0" step="0.01" placeholder="Cost" />
+                <textarea id="prodDescription" placeholder="Description (optional)" rows="3"></textarea>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;align-items:start;">
-                <div class="post-field">
-                    <label class="small-muted">Product Name</label>
-                    <input id="new_name" class="inline-input" placeholder="e.g. Nike Air Zoom" />
+            <div id="imagesSection">
+                <h3>Images</h3>
+                <div class="images-controls">
+                    <input id="imageFileInput" type="file" accept="image/*" multiple />
+                    <button id="importImageBtn" class="secondary" type="button">Import</button>
                 </div>
-                <div class="post-field">
-                    <label class="small-muted">Brand</label>
-                    <select id="new_brand" class="inline-input">
-                        <option value="">Select brand...</option>
-                        <option>Nike</option>
-                        <option>Adidas</option>
-                        <option>Cloudtilt</option>
-                        <option>New Balance</option>
+                <div id="imagesList" class="images-list"></div>
+            </div>
+            <div id="initialVariantSection">
+                <h3>Initial Color & Sizes</h3>
+                <div class="variant-controls">
+                    <input id="initialColorName" placeholder="Color name" />
+                    <input id="initialColorCode" type="color" />
+                    <button id="addInitialColorBtn" class="secondary" type="button">Add Color</button>
+                </div>
+                <div id="initialColorsList" class="colors-list"></div>
+                <div id="initialSizesEditor" class="sizes-editor"></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="cancelProductBtn" value="cancel" class="secondary">Cancel</button>
+                <button id="saveProductBtn" value="default" class="primary">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Variant Modal -->
+    <dialog id="variantModal" class="modal">
+        <form method="dialog" id="variantForm">
+            <h2>Manage Variants</h2>
+            <div class="variant-controls">
+                <input id="variantColorName" placeholder="Color name" />
+                <input id="variantColorCode" type="color" />
+                <button id="addColorBtn" class="secondary" type="button">Add Color</button>
+            </div>
+            <div id="variantColorsList" class="colors-list"></div>
+            <div id="sizesEditor" class="sizes-editor"></div>
+            <div class="modal-actions">
+                <button value="cancel" class="secondary">Close</button>
+                <button id="saveVariantsBtn" value="default" class="primary">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Bulk Price Modal -->
+    <dialog id="bulkPriceModal" class="modal">
+        <form method="dialog" id="bulkPriceForm">
+            <h2>Bulk Update Price</h2>
+            <div class="form-grid">
+                <label>
+                    Field
+                    <select id="bulkPriceField">
+                        <option value="original">Original</option>
+                        <option value="sale">Sale</option>
+                        <option value="cost">Cost</option>
                     </select>
-                </div>
-                <div class="post-field">
-                    <label class="small-muted">Gender</label>
-                    <select id="new_gender" class="inline-input">
-                        <option>Men</option>
-                        <option>Women</option>
-                        <option>Unisex</option>
+                </label>
+                <label>
+                    Method
+                    <select id="bulkPriceMethod">
+                        <option value="set">Set to value</option>
+                        <option value="inc_pct">Increase by %</option>
+                        <option value="dec_pct">Decrease by %</option>
+                        <option value="inc_num">Increase by amount</option>
+                        <option value="dec_num">Decrease by amount</option>
                     </select>
-                </div>
-                <div class="post-field">
-                    <label class="small-muted">Color</label>
-                    <input id="new_color" class="inline-input" placeholder="Color or variant" />
-                </div>
-                <div class="post-field">
-                    <label class="small-muted">Price (numeric PHP)</label>
-                    <input id="new_price" type="number" class="inline-input" placeholder="1299" />
-                </div>
-                <div class="post-field">
-                    <label class="small-muted">Image</label>
-                    <div style="display:flex;gap:8px;align-items:center">
-                        <div id="new_image_preview_wrap" style="width:120px;height:80px;border:1px dashed #e6e6e6;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fafafa;overflow:hidden">
-                            <img id="new_image_preview" src="IMAGE/CHANGETHIS.webp" alt="preview" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" />
-                        </div>
-                        <div style="flex:1">
-                            <input id="new_image_file" type="file" accept="image/*" style="display:none" />
-                            <div style="display:flex;gap:8px;flex-direction:column">
-                                <button id="new_image_choose" class="filter-btn" type="button">Choose Image</button>
-                                <input id="new_image_text" class="inline-input" placeholder="(optional) or enter path like IMAGE/foo.png" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </label>
+                <input id="bulkPriceValue" type="number" step="0.01" placeholder="Value (e.g., 100 or 10%)" />
             </div>
-            <div style="margin-top:12px;margin-bottom:8px;font-weight:600">Size quantities (EU 36–45)</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                <!-- generate size inputs -->
-                <script>/* placeholder for size inputs insertion */</script>
-                <div id="newSizeInputs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            <div class="modal-actions">
+                <button value="cancel" class="secondary">Cancel</button>
+                <button id="applyBulkPriceBtn" value="default" class="primary">Apply</button>
             </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
-                <button onclick="closePostProductModal()" class="filter-btn">Cancel</button>
-                <button id="confirmPostProductBtn" class="btn-black">Post Product</button>
+        </form>
+    </dialog>
+
+    <!-- Bulk Restock Modal -->
+    <dialog id="bulkRestockModal" class="modal">
+        <form method="dialog" id="bulkRestockForm">
+            <h2>Bulk Restock</h2>
+            <div class="form-grid">
+                <label>
+                    Scope
+                    <select id="bulkRestockScope">
+                        <option value="all">All sizes</option>
+                        <option value="low">Only low stock</option>
+                        <option value="out">Only out of stock</option>
+                        <option value="size">Specific size</option>
+                    </select>
+                </label>
+                <input id="bulkRestockSize" type="number" min="35" max="45" step="1" placeholder="EU size (35–45)" />
+                <input id="bulkRestockQty" type="number" min="0" step="1" placeholder="Quantity to add" />
             </div>
-        </div>
-    </div>
+            <div class="modal-actions">
+                <button value="cancel" class="secondary">Cancel</button>
+                <button id="applyBulkRestockBtn" value="default" class="primary">Apply</button>
+            </div>
+        </form>
+    </dialog>
 
-    <script>
-    (function(){
-        // sample seed data (aligned with product-list names, colors and images)
-        var seed = [
-            { id:'#P001', name:'Nike Airmax TN Aqua Blue', brand:'Nike', color:'Aqua Blue', image:'IMAGE/NIKE1.png', sizes:{'36':6,'37':8,'38':4,'39':10,'40':6,'41':5,'42':3,'43':2,'44':1,'45':0}, price:1299 },
-            { id:'#P002', name:'Nike Airmax Black', brand:'Nike', color:'Black', image:'IMAGE/NIKE2.png', sizes:{'36':4,'37':2,'38':10,'39':6,'40':7,'41':8,'42':2,'43':11,'44':7,'45':3}, price:2395 },
-            { id:'#P003', name:'Nike GT CUT 2 LEAP HIGH', brand:'Nike', color:'Multicolor', image:'IMAGE/NIKE3.png', sizes:{'36':2,'37':3,'38':6,'39':5,'40':4,'41':3,'42':2,'43':1,'44':0,'45':0}, price:1999 },
-            { id:'#P004', name:'Nike Airmax White', brand:'Nike', color:'White', image:'IMAGE/NIKE4.png', sizes:{'36':6,'37':5,'38':4,'39':6,'40':5,'41':4,'42':3,'43':2,'44':1,'45':0}, price:2199 },
-            { id:'#P005', name:'Nike Airmax Red', brand:'Nike', color:'Red', image:'IMAGE/NIKE5.png', sizes:{'36':3,'37':4,'38':5,'39':6,'40':7,'41':6,'42':5,'43':4,'44':3,'45':2}, price:2299 },
-            { id:'#P006', name:'Cloudtilt Iron Dew Womens', brand:'Cloudtilt', color:'Iridescent', image:'IMAGE/SALESSHOE1.png', sizes:{'36':5,'37':6,'38':7,'39':8,'40':4,'41':2,'42':1,'43':0,'44':0,'45':0}, price:1299 },
-            { id:'#P007', name:'New Balance 530', brand:'New Balance', color:'Silver', image:'IMAGE/SALESSHOE2.png', sizes:{'36':6,'37':12,'38':2,'39':10,'40':4,'41':5,'42':5,'43':1,'44':2,'45':5}, price:1299 },
-            { id:'#P008', name:'New Balance 574', brand:'New Balance', color:'White/Silver', image:'IMAGE/SALESSHOE2.png', sizes:{'36':5,'37':8,'38':6,'39':9,'40':3,'41':4,'42':4,'43':2,'44':2,'45':3}, price:1399 }
-        ];
-
-        function getInventory(){
-            try{
-                // Make the seed authoritative: overwrite any stored inventory so the
-                // inventory table only shows products that are present on the public
-                // `product-list` (seed). This removes any previously posted admin
-                // items that are not part of the canonical product-list.
-                try{ localStorage.setItem('inventory', JSON.stringify(seed)); }catch(e){}
-                return seed.slice();
-            }catch(e){ return seed.slice(); }
-        }
-        function saveInventory(list){ localStorage.setItem('inventory', JSON.stringify(list)); }
-        function getArchive(){ try{ return JSON.parse(localStorage.getItem('inventoryArchive')||'[]')||[];}catch(e){return[];} }
-        function saveArchive(list){ localStorage.setItem('inventoryArchive', JSON.stringify(list)); }
-
-        var inventory = getInventory();
-        var sortState = { key:null, asc:true };
-
-        function formatPHP(n){ return 'PHP ' + Number(n).toLocaleString(undefined,{minimumFractionDigits:2}); }
-
-        function renderTable(list){
-            var tbody = document.getElementById('inventoryTbody'); tbody.innerHTML='';
-            list.forEach(function(row, idx){
-                var tr = document.createElement('tr');
-                tr.dataset.id = row.id;
-                var sizes = [36,37,38,39,40,41,42,43,44,45];
-                var sizeCells = sizes.map(function(s){
-                    // treat 0 as a valid numeric value — only use empty string when undefined
-                    var v = (row.sizes && row.sizes[s] !== undefined) ? row.sizes[s] : '';
-                    var cls = (v !== '' && Number(v) < 6) ? 'low-stock' : '';
-                    return '<td class="size-col"><span class="'+cls+'">'+v+'</span></td>';
-                }).join('');
-                tr.innerHTML = `
-                    <td>${row.id}</td>
-                    <td>${row.name}</td>
-                    <td>${row.brand}</td>
-                    <td>${row.color}</td>
-                    ${sizeCells}
-                    <td>${formatPHP(row.price)}</td>
-                    <td class="actions-col"><button class="action-btn" onclick="startEditingRow('${row.id}')">✏️ Update</button> <button class="action-btn" onclick="archiveRow('${row.id}')">📦 Archive</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Start inline editing for a row: convert cells into inputs and swap actions to Save/Cancel
-        window.startEditingRow = function(id){
-            var tbody = document.getElementById('inventoryTbody');
-            var tr = Array.from(tbody.querySelectorAll('tr')).find(r=>r.dataset.id===id);
-            if(!tr) return;
-            var list = getInventory(); var item = list.find(i=>i.id===id); if(!item) return;
-            var sizes = [36,37,38,39,40,41,42,43,44,45];
-            // build editable row
-            var sizeInputs = sizes.map(function(s){
-                var v = (item.sizes && item.sizes[s]) ? item.sizes[s] : '';
-                return `<td class="size-col"><input class="size-input" type="number" min="0" data-size="${s}" value="${v}"></td>`;
-            }).join('');
-            tr.innerHTML = `
-                <td>${item.id}</td>
-                <td><input class="inline-input" type="text" id="edit-name-${item.id}" value="${escapeHtml(item.name)}"></td>
-                <td><input class="inline-input" type="text" id="edit-brand-${item.id}" value="${escapeHtml(item.brand)}"></td>
-                <td><input class="inline-input" type="text" id="edit-color-${item.id}" value="${escapeHtml(item.color)}"></td>
-                ${sizeInputs}
-                <td><input class="inline-input" type="number" id="edit-price-${item.id}" value="${item.price}"></td>
-                <td class="actions-col"><button class="action-btn" onclick="saveEditRow('${item.id}')">💾 Save</button><button class="action-btn" onclick="cancelEditRow('${item.id}')">✖ Cancel</button></td>
-            `;
-        }
-
-        // helper to escape HTML in values
-        function escapeHtml(str){ return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-        window.saveEditRow = function(id){
-            var list = getInventory(); var idx = list.findIndex(i=>i.id===id); if(idx===-1) return;
-            var item = list[idx];
-            var nameEl = document.getElementById('edit-name-'+id);
-            var brandEl = document.getElementById('edit-brand-'+id);
-            var colorEl = document.getElementById('edit-color-'+id);
-            var priceEl = document.getElementById('edit-price-'+id);
-            if(nameEl) item.name = nameEl.value.trim();
-            if(brandEl) item.brand = brandEl.value.trim();
-            if(colorEl) item.color = colorEl.value.trim();
-            if(priceEl && !isNaN(Number(priceEl.value))) item.price = Number(priceEl.value);
-            // sizes
-            var tbody = document.getElementById('inventoryTbody');
-            var tr = Array.from(tbody.querySelectorAll('tr')).find(r=>r.dataset.id===id);
-            if(tr){
-                tr.querySelectorAll('input.size-input').forEach(function(inp){
-                    var s = inp.getAttribute('data-size'); var v = inp.value; if(!isNaN(Number(v))) { if(!item.sizes) item.sizes = {}; item.sizes[s] = Number(v); }
-                });
-            }
-            list[idx]=item; saveInventory(list); inventory=list; applySearch();
-        }
-
-        window.cancelEditRow = function(id){ applySearch(); }
-
-        window.archiveRow = function(id){
-            var list = getInventory(); var idx = list.findIndex(function(i){return i.id===id}); if(idx===-1) return;
-            var item = list.splice(idx,1)[0]; saveInventory(list); var archive = getArchive(); archive.unshift(item); saveArchive(archive); inventory=list; applySearch();
-        }
-
-        function matches(row, q){ if(!q) return true; q = q.toLowerCase();
-            if((row.id||'').toLowerCase().indexOf(q)!==-1) return true;
-            if((row.name||'').toLowerCase().indexOf(q)!==-1) return true;
-            if((row.brand||'').toLowerCase().indexOf(q)!==-1) return true;
-            if((row.color||'').toLowerCase().indexOf(q)!==-1) return true;
-            if((row.price||'').toString().toLowerCase().indexOf(q)!==-1) return true;
-            for(var s in row.sizes) if(String(row.sizes[s]).indexOf(q)!==-1) return true;
-            return false;
-        }
-
-        function applySearch(){
-            var q = document.getElementById('inventorySearch').value.trim();
-            var filtered = getInventory().filter(function(r){ return matches(r,q); });
-            // apply sort
-            if(sortState.key){ filtered.sort(function(a,b){
-                var A = a[sortState.key], B = b[sortState.key];
-                if(sortState.key==='price'){ return sortState.asc? A-B : B-A; }
-                A = (A||'').toString().toLowerCase(); B=(B||'').toString().toLowerCase(); if(A<B) return sortState.asc?-1:1; if(A>B) return sortState.asc?1:-1; return 0;
-            }); }
-            renderTable(filtered);
-        }
-
-        document.addEventListener('DOMContentLoaded', function(){
-            document.getElementById('inventorySearch').addEventListener('input', applySearch);
-            document.querySelectorAll('.filter-btn').forEach(function(b){ b.addEventListener('click', function(){ var key = b.dataset.sort; if(sortState.key===key) sortState.asc=!sortState.asc; else { sortState.key=key; sortState.asc=true;} applySearch(); }); });
-            document.getElementById('viewArchiveBtn').addEventListener('click', function(){ window.location.href='inventory-archive.html'; });
-            // Post New Product button + modal wiring
-            var postBtn = document.getElementById('postNewProductBtn');
-            var overlay = document.getElementById('postProductOverlay');
-            var sizeContainer = document.getElementById('newSizeInputs');
-            // image upload state for modal
-            var newImageData = null;
-            var fileInput = document.getElementById('new_image_file');
-            var previewImg = document.getElementById('new_image_preview');
-            var previewWrap = document.getElementById('new_image_preview_wrap');
-            var chooseBtn = document.getElementById('new_image_choose');
-            var textInput = document.getElementById('new_image_text');
-            function buildSizeInputs(){ sizeContainer.innerHTML=''; var sizes=[36,37,38,39,40,41,42,43,44,45]; sizes.forEach(function(s){ var div=document.createElement('div'); div.style.display='flex'; div.style.flexDirection='column'; div.style.alignItems='center'; div.style.width='64px'; div.innerHTML = '<label style="font-size:0.85rem;margin-bottom:6px">'+s+'</label><input class="size-input" type="number" min="0" data-size="'+s+'" value="0">'; sizeContainer.appendChild(div); }); }
-            window.openPostProductModal = function(){ buildSizeInputs(); overlay.style.display='flex'; newImageData = null; if(previewImg) previewImg.src = 'IMAGE/CHANGETHIS.webp'; if(textInput) textInput.value=''; }
-            window.closePostProductModal = function(){ overlay.style.display='none'; }
-            if(postBtn){ postBtn.addEventListener('click', function(){ openPostProductModal(); }); }
-            // Confirm post product
-            var confirmBtn = document.getElementById('confirmPostProductBtn');
-            // wire image chooser and preview
-            if(fileInput){
-                fileInput.addEventListener('change', function(){
-                    if(fileInput.files && fileInput.files[0]){
-                        var reader = new FileReader();
-                        reader.onload = function(e){ newImageData = e.target.result; if(previewImg) previewImg.src = newImageData; };
-                        reader.readAsDataURL(fileInput.files[0]);
-                    }
-                });
-            }
-            if(previewWrap){ previewWrap.addEventListener('click', function(){ if(fileInput) fileInput.click(); }); }
-            if(chooseBtn){ chooseBtn.addEventListener('click', function(){ if(fileInput) fileInput.click(); }); }
-            if(textInput){ textInput.addEventListener('input', function(){ var v = textInput.value.trim(); if(v) { if(previewImg) previewImg.src = v; } }); }
-
-            if(confirmBtn){ confirmBtn.addEventListener('click', function(){
-                var name = document.getElementById('new_name').value.trim();
-                var brand = document.getElementById('new_brand').value.trim();
-                var gender = document.getElementById('new_gender').value.trim();
-                var color = document.getElementById('new_color').value.trim();
-                var price = Number(document.getElementById('new_price').value) || 0;
-                var image = newImageData || (document.getElementById('new_image_text').value.trim()) || 'IMAGE/NIKE1.png';
-                if(!name || !brand){ alert('Please enter at least a product name and brand.'); return; }
-                var sizesEls = Array.from(document.querySelectorAll('#newSizeInputs input.size-input'));
-                var sizesObj = {}; sizesEls.forEach(function(inp){ var s = inp.getAttribute('data-size'); var v = Number(inp.value)||0; sizesObj[s]=v; });
-                // generate id (simple incremental)
-                var list = getInventory(); var nextId = '#P' + String((list.length+1)).padStart(3,'0');
-                var newItem = { id: nextId, name: name, brand: brand, color: color, gender: gender, sizes: sizesObj, price: price, image: image };
-                list.unshift(newItem); saveInventory(list); inventory = list; applySearch(); closePostProductModal();
-                // notify other pages via storage event
-                try{ localStorage.setItem('inventory', JSON.stringify(list)); }catch(e){}
-            }); }
-            // initial save if none
-            try{ if(!localStorage.getItem('inventory')) localStorage.setItem('inventory', JSON.stringify(seed)); }catch(e){}
-            applySearch();
-
-            
-        });
-    })();
-    </script>
-
+    <script src="inventory-app.js"></script>
 </body>
+</html>
 </html>
