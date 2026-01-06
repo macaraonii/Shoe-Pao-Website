@@ -186,9 +186,12 @@
       const matchesText = !text || [p.brand, p.model, p.category].join(' ').toLowerCase().includes(text) || p.colors.some(c => c.name.toLowerCase().includes(text));
       const matchesBrand = !filterBrand || p.brand === filterBrand;
       const matchesCat = !filterCat || p.category === filterCat;
-      // A product should match a selected size only if that size has stock > 0
-      const matchesSize = !filterSize || p.colors.some(c => c.sizes.some(s => String(s.eu) === filterSize && s.stock > 0));
-      const total = totalStockForProduct(p);
+      // If a specific size is selected, consider size existence; allow out-of-stock when filtering 'out'
+      const matchesSize = !filterSize || p.colors.some(c => c.sizes.some(s => String(s.eu) === filterSize && (filterStock === 'out' ? true : s.stock > 0)));
+      // Determine stock status: use total product stock, or size-specific total when a size filter is applied
+      const total = !filterSize
+        ? totalStockForProduct(p)
+        : p.colors.reduce((acc, c) => acc + c.sizes.reduce((sacc, s) => sacc + (String(s.eu) === filterSize ? s.stock : 0), 0), 0);
       const stockStatus = total === 0 ? 'out' : (total <= threshold ? 'low' : 'in');
       const matchesStock = !filterStock || stockStatus === filterStock;
       const matchesStatus = !filterStatus || p.status === filterStatus;
@@ -303,6 +306,11 @@
     const pid = state.ui.editingProductId;
     if (pid) {
       const p = state.products.find(x => x.id === pid);
+      // Confirm archiving when changing status to archived
+      if (statusSel === 'archived' && p.status !== 'archived') {
+        const ok = confirm(`Archive ${p.brand} ${p.model}?\nArchived products are hidden from active listings.`);
+        if (!ok) { return; }
+      }
       p.brand = brand; p.model = model; p.category = cat; p.status = statusSel;
       p.pricing.original = pOrig; p.pricing.sale = pSale; p.pricing.cost = pCost;
       // Keep existing SKU unless empty; regenerate if missing
@@ -313,6 +321,10 @@
       // Require at least one color with sizes when adding
       const colors = state.ui.productModalColors.filter(c => (c.name || '').trim().length);
       if (!colors.length) { alert('Add at least one color with stock'); return; }
+      if (statusSel === 'archived') {
+        const ok = confirm('Create this product in archived state?');
+        if (!ok) { return; }
+      }
       const newP = newProduct({ brand, model, category: cat, status: statusSel, images: [], pricing: { original: pOrig, sale: pSale, cost: pCost }, description: desc });
       newP.images = state.ui.productModalImages.map(it => it.url);
       // Copy colors and sizes
@@ -449,6 +461,7 @@
       const id = btn.dataset.id;
       const p = state.products.find(x => x.id === state.ui.editingVariantProductId);
       const c = p.colors.find(y => y.id === id);
+      if (!confirm('Clear all stock for this color? This cannot be undone.')) return;
       c.sizes.forEach(s => s.stock = 0);
       saveAll(); openVariantModal(p.id);
     }));
@@ -553,6 +566,7 @@
     editor.querySelectorAll('[data-action="clear-all-init"]').forEach(btn => btn.addEventListener('click', () => {
       const id = btn.dataset.id;
       const c = state.ui.productModalColors.find(y => y.id === id);
+      if (!confirm('Clear all stock for this color? This cannot be undone.')) return;
       c.sizes.forEach(s => s.stock = 0);
       renderInitialVariants();
     }));
@@ -636,6 +650,9 @@
   function bulkArchive() {
     const ids = Array.from(state.ui.selectedProductIds);
     if (!ids.length) { alert('Select products first'); return; }
+    const names = state.products.filter(p => ids.includes(p.id)).map(p => `${p.brand} ${p.model}`);
+    const msg = `Archive ${ids.length} product(s)?\nArchived products are hidden from active listings.`;
+    if (!confirm(msg)) { return; }
     state.products.forEach(p => { if (ids.includes(p.id)) p.status = 'archived'; });
     saveAll(); renderProductsTable();
   }
