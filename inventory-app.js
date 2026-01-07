@@ -89,9 +89,10 @@
     return { id: uid('color'), name, code: code || '#ffffff', sizes: ensureSizes() };
   }
 
-  function newProduct({ brand, model, category, status = 'active', images = [], pricing = {}, description = '', sku = '' }) {
+  function newProduct({ brand, model, category, status = 'active', images = [], pricing = {}, description = '', sku = '', gender = 'Unisex' }) {
     return {
       id: uid('prod'), brand, model, category, status,
+      gender: gender || 'Unisex',
       images, pricing: {
         original: parseNum(pricing.original, 0),
         sale: parseNum(pricing.sale, 0),
@@ -126,6 +127,19 @@
     ls.set(STORAGE_KEYS.inventory, state.products);
     ls.set(STORAGE_KEYS.sales, state.sales);
     ls.set(STORAGE_KEYS.settings, state.settings);
+  }
+
+  // Ensure every product has a SKU; generate if missing/blank
+  function backfillSkus() {
+    if (!Array.isArray(state.products) || !state.products.length) return;
+    let changed = false;
+    state.products.forEach(p => {
+      if (!p.sku || !String(p.sku).trim()) {
+        p.sku = generateProductSKU(p.brand, p.model, p.category);
+        changed = true;
+      }
+    });
+    if (changed) saveAll();
   }
 
   // Sample data
@@ -254,6 +268,7 @@
     const brand = qs('#prodBrand');
     const model = qs('#prodModel');
     const cat = qs('#prodCategory');
+    const genderSel = qs('#prodGender');
     const statusSel = qs('#prodStatus');
     const pOrig = qs('#priceOriginal');
     const pSale = qs('#priceSale');
@@ -265,6 +280,7 @@
     if (isEdit) {
       const p = state.products.find(x => x.id === productId);
       brand.value = p.brand; model.value = p.model; cat.value = p.category || ''; statusSel.value = p.status;
+      if (genderSel) genderSel.value = p.gender || 'Unisex';
       pOrig.value = p.pricing.original || ''; pSale.value = p.pricing.sale || ''; pCost.value = p.pricing.cost || '';
       if (skuEl) skuEl.value = p.sku || '';
       if (descEl) descEl.value = p.description || '';
@@ -274,7 +290,7 @@
       const initSec = qs('#initialVariantSection'); if (initSec) initSec.style.display = 'none';
       state.ui.productModalColors = [];
     } else {
-      brand.value = ''; model.value = ''; cat.value = ''; statusSel.value = 'active'; pOrig.value = ''; pSale.value = ''; pCost.value = '';
+      brand.value = ''; model.value = ''; cat.value = ''; if (genderSel) genderSel.value = 'Unisex'; statusSel.value = 'active'; pOrig.value = ''; pSale.value = ''; pCost.value = '';
       if (skuEl) skuEl.value = '';
       if (descEl) descEl.value = '';
       // Show initial variant builder on add
@@ -292,6 +308,7 @@
     const brand = qs('#prodBrand').value.trim();
     const model = qs('#prodModel').value.trim();
     const cat = qs('#prodCategory').value.trim();
+    const genderSel = (qs('#prodGender') ? qs('#prodGender').value : 'Unisex');
     const statusSel = qs('#prodStatus').value;
     const pOrig = parseNum(qs('#priceOriginal').value, 0);
     const pSale = parseNum(qs('#priceSale').value, 0);
@@ -303,7 +320,13 @@
     if (pOrig <= 0) { alert('Original price is required'); return; }
     if (!state.ui.productModalImages || state.ui.productModalImages.length < 2) { alert('Add at least two images'); return; }
 
+    // Prevent duplicates: do not allow another product with the same Brand + Model
     const pid = state.ui.editingProductId;
+    const modelKey = model.toLowerCase();
+    const brandKey = brand.toLowerCase();
+    const duplicate = state.products.some(p => (p.id !== pid) && (String(p.model||'').trim().toLowerCase() === modelKey) && (String(p.brand||'').trim().toLowerCase() === brandKey));
+    if (duplicate) { alert('A product with the same brand and model already exists.'); return; }
+
     if (pid) {
       const p = state.products.find(x => x.id === pid);
       // Confirm archiving when changing status to archived
@@ -311,7 +334,7 @@
         const ok = confirm(`Archive ${p.brand} ${p.model}?\nArchived products are hidden from active listings.`);
         if (!ok) { return; }
       }
-      p.brand = brand; p.model = model; p.category = cat; p.status = statusSel;
+      p.brand = brand; p.model = model; p.category = cat; p.gender = genderSel || 'Unisex'; p.status = statusSel;
       p.pricing.original = pOrig; p.pricing.sale = pSale; p.pricing.cost = pCost;
       // Keep existing SKU unless empty; regenerate if missing
       if (!p.sku) p.sku = generateProductSKU(brand, model, cat);
@@ -325,7 +348,7 @@
         const ok = confirm('Create this product in archived state?');
         if (!ok) { return; }
       }
-      const newP = newProduct({ brand, model, category: cat, status: statusSel, images: [], pricing: { original: pOrig, sale: pSale, cost: pCost }, description: desc });
+      const newP = newProduct({ brand, model, category: cat, status: statusSel, images: [], pricing: { original: pOrig, sale: pSale, cost: pCost }, description: desc, gender: genderSel || 'Unisex' });
       newP.images = state.ui.productModalImages.map(it => it.url);
       // Copy colors and sizes
       newP.colors = colors.map(c => ({ id: c.id, name: c.name, code: c.code, sizes: c.sizes.map(s => ({ eu: s.eu, stock: clampNum(parseNum(s.stock,0), 0, 9999), sku: s.sku || '' })) }));
@@ -913,6 +936,7 @@
   function init() {
     loadAll();
     seedSampleIfEmpty();
+    backfillSkus();
     wireEvents();
     renderAll();
   }

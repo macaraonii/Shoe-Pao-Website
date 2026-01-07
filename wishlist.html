@@ -219,11 +219,11 @@
                 <div class="footer-note">All product names, logos, brands, trademarks, and registered trademarks are the property of their respective owners. All company, product, and service names used on this website are for identification purposes only. Use of these names, logos, and brands does not imply endorsement or affiliation.<br><br>© 2025 Shoe Pao Footwear. All rights reserved.</div>
             </div>
             <div class="footer-right">
-                <a href="#" class="footer-link">About Us</a>
-                <a href="#" class="footer-link">Shipping</a>
-                <a href="#" class="footer-link">Returns & Exchanges</a>
-                <a href="#" class="footer-link">Privacy Policy</a>
-                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="about-us.html" class="footer-link">About Us</a>
+                <a href="shipping.html" class="footer-link">Shipping</a>
+                <a href="returns.html" class="footer-link">Returns & Exchanges</a>
+                <a href="privacy.html" class="footer-link">Privacy Policy</a>
+                <a href="terms.html" class="footer-link">Terms of Service</a>
             </div>
         </div>
     </footer>
@@ -236,7 +236,7 @@
     function goToProductList() { window.location.href = 'product-list.html'; }
     function goToOrders() { window.location.href = 'client-orders.html'; }
     function goToWishlist() { window.location.href = 'wishlist.html'; }
-    function goToFAQ() { window.location.href = 'policy.html'; }
+    function goToFAQ() { window.location.href = 'privacy.html'; }
     function goToContact() { window.location.href = 'contact.html'; }
     function goToUserPage() {
     try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; }
