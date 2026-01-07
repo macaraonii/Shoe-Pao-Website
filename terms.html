@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - SHOEPAO</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body.page { font-family:'Poppins', Arial, sans-serif; background:#fff; color:#222; margin:0; min-height:100vh; display:flex; flex-direction:column; }
+    .page-hero { background:#111; color:#fff; padding:36px 7vw; }
+    .page-title { font-size:1.8rem; font-weight:700; }
+    .page-sub { opacity:.9; margin-top:6px; }
+    .page-container { flex:1 1 auto; padding:28px 7vw; display:flex; justify-content:center; }
+    .content { width:100%; max-width:900px; background:#fff; border:1px solid #eee; border-radius:10px; padding:22px; box-shadow:0 4px 14px rgba(0,0,0,0.04); }
+    .section-title { font-size:1.22rem; font-weight:600; margin:12px 0; }
+    p { color:#444; line-height:1.6; margin:10px 0; }
+    ul { color:#444; line-height:1.6; }
+  </style>
+</head>
+<body class="page">
+  <nav class="homepage-header" style="position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;height:72px;padding:0 46px;">
+    <div style="display:flex;align-items:center;gap:24px;">
+      <a href="home.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;">
+        <img src="IMAGE/SHOEPAOLOGO.png" alt="SHOEPAO Logo" style="height:42px;width:auto;">
+        <span class="header-caption" style="font-size:1.18rem;font-weight:600;color:#b71c1c;">Shoe Pao Footwear</span>
+      </a>
+      <span class="header-link" onclick="goToProductList()">Shop</span>
+      <span class="header-link" onclick="window.location.href='about-us.html'">About Us</span>
+      <span class="header-link" onclick="window.location.href='shipping.html'">Shipping</span>
+      <span class="header-link" onclick="window.location.href='returns.html'">Returns & Exchanges</span>
+      <span class="header-link" onclick="window.location.href='privacy.html'">Privacy Policy</span>
+      <span class="header-link" onclick="window.location.href='terms.html'">Terms of Service</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px;">
+      <button class="header-icon-btn" onclick="toggleSearchBox" style="background:none;border:none;padding:6px;display:flex;align-items:center;cursor:pointer;"><img src="IMAGE/SEARCHICON.png" class="header-icon" alt="Search" style="width:26px;height:26px;"></button>
+      <button class="header-icon-btn" onclick="goToUserPage()" style="background:none;border:none;padding:6px;display:flex;align-items:center;cursor:pointer;"><img src="IMAGE/USERICON.png" class="header-icon" alt="User" style="width:26px;height:26px;"></button>
+      <button class="header-icon-btn" id="cartToggleBtn" style="background:none;border:none;padding:6px;display:flex;align-items:center;cursor:pointer;"><img src="IMAGE/CARTICON.png" class="header-icon" alt="Cart" style="width:26px;height:26px;"></button>
+    </div>
+    <div class="search-box" id="searchBox" style="display:none;position:absolute;top:72px;right:80px;background:#fff;border:1px solid #ccc;border-radius:8px;padding:8px 16px;z-index:101;">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search products..." onkeydown="searchKeyDown(event)" style="font-family:'Poppins',Arial,sans-serif;font-size:1rem;border:none;outline:none;width:220px;padding:6px 0;">
+    </div>
+  </nav>
+
+  <header class="page-hero">
+    <div class="page-title">Terms of Service</div>
+    <div class="page-sub">General terms, account rules, IP, buying, and payment.</div>
+  </header>
+
+  <main class="page-container">
+    <article class="content">
+      <div class="section-title">General</div>
+      <p>Welcome to Shoe Pao. These policies govern your use of the Shoe Pao website and services. Shoe Pao provides an online marketplace where buyers and sellers connect to buy and sell goods. The contract for sale is between the buyer and the seller; Shoe Pao is a platform provider and does not take part in that contract. Shoe Pao may change or suspend parts of the service, impose limits, or remove content at its discretion. By using our services you accept these terms and agree to comply with local laws and our policies.</p>
+
+      <div class="section-title">Registration & Account Info</div>
+      <p>Some features require an account. You must keep your credentials secure and provide accurate information. You are responsible for all activity on your account. Shoe Pao may suspend or terminate accounts that violate our policies or for any other reason permitted by law. If you are under the legal age to consent, do not open an account without a parent or guardian.</p>
+
+      <div class="section-title">Product Info & Intellectual Property</div>
+      <p>Sellers are responsible for the accuracy of their listings. Do not post content you do not own or have rights to. Shoe Pao may remove listings that infringe intellectual property or violate these policies. If you are an IP owner and believe your rights were infringed, follow our reporting process.</p>
+
+      <div class="section-title">Buying a Product</div>
+      <p>The purchase contract is between buyer and seller. Shoe Pao facilitates transactions and may hold payments in a guarantee account where applicable. Payment release and buyer protections are subject to the terms of the Shoe Pao Guarantee or equivalent service.</p>
+      <p>These products are Grade A replicas of the brand models.</p>
+
+      <div class="section-title">Payment</div>
+      <p>Shoe Pao supports multiple payment methods (credit card, COD, online channels). Payments are processed by third‑party providers. Shoe Pao is not liable for payment errors caused by users or third parties. Buyers may only change payment method before payment is completed.</p>
+
+      <div class="section-title">Changes & Contact</div>
+      <p>We may update these terms from time to time. Material changes will be indicated on this page. For questions about these terms, contact us using the details on our About page.</p>
+    </article>
+  </main>
+
+  <footer class="footer-section">
+    <div class="site-container">
+      <div class="footer-row">
+        <div class="footer-left">
+          <div class="footer-header">Have questions?</div>
+          <div class="footer-subheader">Contact us at our facebook page</div>
+          <div class="footer-subheader" style="margin-top:18px;">Or via phone/email</div>
+          <div class="footer-divider"></div>
+          <div class="footer-note">All product names, logos, brands, trademarks, and registered trademarks are the property of their respective owners. All company, product, and service names used on this website are for identification purposes only. Use of these names, logos, and brands does not imply endorsement or affiliation.<br><br>© 2025 Shoe Pao Footwear. All rights reserved.</div>
+        </div>
+        <div class="footer-right">
+          <a href="about-us.html" class="footer-link">About Us</a>
+          <a href="shipping.html" class="footer-link">Shipping</a>
+          <a href="returns.html" class="footer-link">Returns & Exchanges</a>
+          <a href="privacy.html" class="footer-link">Privacy Policy</a>
+          <a href="terms.html" class="footer-link">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function goToFAQ(){ window.location.href='privacy.html'; }
+    function goToProductList(){ window.location.href='product-list.html'; }
+    function goToUserPage(){ try{ var p=JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p||!p.email){ window.location.href='login.html'; return;} }catch(e){ window.location.href='login.html'; return;} window.location.href='profile.html'; }
+    function toggleSearchBox(){ var box=document.getElementById('searchBox'); box.style.display=(box.style.display==='block')?'none':'block'; if(box.style.display==='block'){ document.getElementById('searchInput').focus(); } }
+    function searchKeyDown(e){ if(e.key==='Enter'){ var v=document.getElementById('searchInput').value.trim(); if(v){ window.location.href='product-list.html?search='+encodeURIComponent(v); } } }
+  </script>
+
+  <!-- Cart Overlay + Sidebar (universal) -->
+  <div id="cartOverlay" class="cart-overlay" aria-hidden="true"></div>
+  <aside id="cartSidebar" class="cart-sidebar" aria-hidden="true" role="complementary">
+    <div class="cart-header-row">
+      <div><span class="cart-header-title">Cart (<span id="cartCount">0</span>)</span></div>
+      <button id="closeCartBtn" class="cart-close" aria-label="Close cart"><img src="IMAGE/X.png" alt="Close" style="width:20px;height:20px;"></button>
+    </div>
+    <div class="cart-divider"></div>
+    <div id="cartItems" class="cart-items"><div class="cart-empty">Your cart is empty</div></div>
+    <div class="cart-divider"></div>
+    <div class="cart-subtotal-row"><span class="cart-subtotal-label">Subtotal</span><span id="cartSubtotal" class="cart-subtotal-value">₱0.00</span></div>
+    <button id="checkoutBtn" class="cart-checkout-btn">Checkout</button>
+  </aside>
+  <script>
+  (function(){
+    let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+    function formatPHP(a){ try{ return new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(a);}catch(e){return '₱'+Number(a).toFixed(2);} }
+    function save(){ localStorage.setItem('cart', JSON.stringify(cart)); }
+    const cartOverlay=document.getElementById('cartOverlay');
+    const cartSidebar=document.getElementById('cartSidebar');
+    const cartItemsContainer=document.getElementById('cartItems');
+    const cartCountEl=document.getElementById('cartCount');
+    const cartSubtotalEl=document.getElementById('cartSubtotal');
+    const closeCartBtn=document.getElementById('closeCartBtn');
+    const checkoutBtn=document.getElementById('checkoutBtn');
+    function getNavCartButton(){ const img=document.querySelector('img[alt="Cart"]'); return img?img.closest('button'):null; }
+    function openCartSidebar(){ cartOverlay.classList.add('show'); cartSidebar.classList.add('open'); document.body.style.overflow='hidden'; cartSidebar.setAttribute('aria-hidden','false'); cartOverlay.setAttribute('aria-hidden','false'); }
+    function closeCartSidebar(){ cartOverlay.classList.remove('show'); cartSidebar.classList.remove('open'); document.body.style.overflow=''; cartSidebar.setAttribute('aria-hidden','true'); cartOverlay.setAttribute('aria-hidden','true'); }
+    function render(){ cartItemsContainer.innerHTML=''; if(cart.length===0){ const d=document.createElement('div'); d.className='cart-empty'; d.textContent='Your cart is empty'; cartItemsContainer.appendChild(d); cartCountEl.textContent=0; cartSubtotalEl.textContent=formatPHP(0); save(); return; } let subtotal=0, qty=0; cart.forEach((item,i)=>{ subtotal+=item.price*item.quantity; qty+=item.quantity; const box=document.createElement('div'); box.className='cart-item-box'; const img=document.createElement('img'); img.className='cart-item-img'; img.src=item.image||'IMAGE/NIKE1.png'; img.alt=item.title||'Product'; const mid=document.createElement('div'); mid.className='cart-item-middle'; const title=document.createElement('div'); title.className='cart-item-title'; title.textContent=item.title; const brand=document.createElement('div'); brand.className='cart-item-brand'; brand.textContent=item.brand; const size=document.createElement('div'); size.className='cart-item-size'; size.textContent='Size: '+(item.size||''); const controls=document.createElement('div'); controls.className='cart-quantity-controls'; const dec=document.createElement('button'); dec.className='qty-btn decrease'; dec.setAttribute('data-index',i); const decImg=document.createElement('img'); decImg.src='IMAGE/LessenBTN.png'; decImg.alt='-'; decImg.style.width='22px'; decImg.style.height='22px'; dec.appendChild(decImg); const qtyTxt=document.createElement('span'); qtyTxt.className='cart-item-qty'; qtyTxt.textContent=item.quantity; const inc=document.createElement('button'); inc.className='qty-btn increase'; inc.setAttribute('data-index',i); const incImg=document.createElement('img'); incImg.src='IMAGE/AddBTN.png'; incImg.alt='+'; incImg.style.width='22px'; incImg.style.height='22px'; inc.appendChild(incImg); controls.appendChild(dec); controls.appendChild(qtyTxt); controls.appendChild(inc); mid.appendChild(title); mid.appendChild(brand); mid.appendChild(size); mid.appendChild(controls); const rm=document.createElement('button'); rm.className='cart-item-remove'; rm.setAttribute('data-index',i); const tr=document.createElement('img'); tr.src='IMAGE/TrashIcon.png'; tr.alt='Remove'; tr.style.width='18px'; tr.style.height='18px'; rm.appendChild(tr); const price=document.createElement('div'); price.className='cart-item-price'; price.textContent=formatPHP(item.price*item.quantity); box.appendChild(img); box.appendChild(mid); box.appendChild(rm); box.appendChild(price); cartItemsContainer.appendChild(box); }); cartCountEl.textContent=qty; cartSubtotalEl.textContent=formatPHP(subtotal); attach(); }
+    function attach(){ document.querySelectorAll('.qty-btn.decrease').forEach(btn=>{ btn.onclick=function(){ const i=parseInt(btn.getAttribute('data-index'),10); if(!isNaN(i)&&cart[i]){ if(cart[i].quantity>1){ cart[i].quantity--; } render(); save(); } }; }); document.querySelectorAll('.qty-btn.increase').forEach(btn=>{ btn.onclick=function(){ const i=parseInt(btn.getAttribute('data-index'),10); if(!isNaN(i)&&cart[i]){ cart[i].quantity++; render(); save(); } }; }); document.querySelectorAll('.cart-item-remove').forEach(btn=>{ btn.onclick=function(){ const i=parseInt(btn.getAttribute('data-index'),10); if(!isNaN(i)){ cart.splice(i,1); render(); save(); } }; }); }
+    document.addEventListener('DOMContentLoaded', function(){ const navCartBtn=getNavCartButton(); if(navCartBtn){ navCartBtn.removeAttribute('onclick'); navCartBtn.addEventListener('click', function(e){ e.preventDefault(); openCartSidebar(); }); } if(closeCartBtn) closeCartBtn.addEventListener('click', closeCartSidebar); if(cartOverlay) cartOverlay.addEventListener('click', closeCartSidebar); render(); if(checkoutBtn){ checkoutBtn.addEventListener('click', function(){ window.location.href='checkout.html'; }); } });
+  })();
+  </script>
+  <script src="cart-storage.js"></script>
+</body>
+</html>

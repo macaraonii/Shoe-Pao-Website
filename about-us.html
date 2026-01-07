@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - SHOEPAO</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body.about-body { font-family: 'Poppins', Arial, sans-serif; background:#fff; color:#222; margin:0; padding:0; }
+        .about-hero { position:relative; width:100%; height:300px; background-size:cover; background-position:center; display:flex; align-items:flex-end; }
+        .about-hero .overlay { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.45) 100%); }
+        .about-hero-content { position:relative; z-index:1; padding:24px 7vw; color:#fff; }
+        .about-title { font-size:2rem; font-weight:700; margin:0 0 6px 0; text-shadow:0 2px 8px rgba(0,0,0,0.18); }
+        .about-subtitle { font-size:1.05rem; font-weight:400; opacity:0.95; }
+
+        .about-container { padding:32px 7vw; display:grid; grid-template-columns: 1.6fr 1fr; gap:32px; }
+        .about-card { background:#fff; border:1px solid #eee; border-radius:10px; padding:22px; box-shadow:0 4px 14px rgba(0,0,0,0.04); }
+        .about-card h2 { font-size:1.35rem; margin:0 0 12px 0; }
+        .about-card p { line-height:1.55; margin:0 0 10px 0; color:#444; }
+        .about-list { margin:0; padding-left:18px; color:#444; }
+        .about-kv { display:grid; grid-template-columns: 120px 1fr; gap:8px 12px; margin-top:8px; }
+        .about-kv .k { color:#555; }
+        .about-kv .v { font-weight:500; }
+        .map-link { display:inline-flex; align-items:center; gap:8px; margin-top:12px; background:#222; color:#fff; padding:10px 14px; border-radius:22px; text-decoration:none; font-weight:500; }
+        .map-link:hover { background:#000; }
+
+        .about-cta-row { margin-top:14px; display:flex; gap:12px; flex-wrap:wrap; }
+        .about-btn { background:#b71c1c; color:#fff; border:none; border-radius:22px; padding:10px 16px; font-weight:600; cursor:pointer; }
+        .about-btn.secondary { background:#222; }
+
+        @media (max-width: 980px) { .about-container { grid-template-columns: 1fr; } .about-hero { height:220px; } }
+    </style>
+</head>
+<body class="about-body">
+    <!-- Header Navigation (mirrors home header for consistency) -->
+    <nav class="homepage-header">
+        <div class="site-container" style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="header-left" style="display:flex;align-items:center;gap:24px;">
+                <a href="home.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;">
+                    <img src="IMAGE/SHOEPAOLOGO.png" class="header-logo" alt="SHOEPAO Logo" style="height:41.74px;width:auto;">
+                    <span class="header-caption" style="font-size:1.18rem;font-weight:600;color:#b71c1c;">Shoe Pao Footwear</span>
+                </a>
+                <span class="header-link" onclick="goToProductList()">Shop</span>
+                <span class="header-link" onclick="window.location.href='about-us.html'">About Us</span>
+                <span class="header-link" onclick="window.location.href='shipping.html'">Shipping</span>
+                <span class="header-link" onclick="window.location.href='returns.html'">Returns & Exchanges</span>
+                <span class="header-link" onclick="window.location.href='privacy.html'">Privacy Policy</span>
+                <span class="header-link" onclick="window.location.href='terms.html'">Terms of Service</span>
+            </div>
+            <div class="header-right" style="display:flex;align-items:center;gap:18px;">
+                <button class="header-icon-btn" onclick="toggleSearchBox()" style="background:none;border:none;padding:6px;display:flex;align-items:center;cursor:pointer;"><img src="IMAGE/SEARCHICON.png" class="header-icon" alt="Search" style="width:26px;height:26px;"></button>
+                <button class="header-icon-btn" onclick="goToUserPage()" style="background:none;border:none;padding:6px;display:flex;align-items:center;cursor:pointer;"><img src="IMAGE/USERICON.png" class="header-icon" alt="User" style="width:26px;height:26px;"></button>
+                <button class="header-icon-btn" onclick="goToCartPage()" style="background:none;border:none;padding:6px;display:flex;align-items:center;cursor:pointer;"><img src="IMAGE/CARTICON.png" class="header-icon" alt="Cart" style="width:26px;height:26px;"></button>
+            </div>
+            <div class="search-box" id="searchBox" style="display:none;position:absolute;top:72px;right:80px;background:#fff;border:1px solid #ccc;border-radius:8px;padding:8px 16px;z-index:101;">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search products..." onkeydown="searchKeyDown(event)" style="font-family:'Poppins',Arial,sans-serif;font-size:1rem;border:none;outline:none;width:220px;padding:6px 0;">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="about-hero" style="background-image:url('IMAGE/res/storefront.jpg');">
+        <div class="overlay"></div>
+        <div class="about-hero-content">
+            <div class="about-title">About Shoe Pao Footwear</div>
+            <div class="about-subtitle">Local shop. Friendly service. Styles you love.</div>
+        </div>
+    </section>
+
+    <!-- Content -->
+    <main class="about-container">
+        <section class="about-card">
+            <h2>Our Story</h2>
+            <p>We started Shoe Pao with a simple goal: make trending footwear easier to try and buy—online and in-store. From everyday pairs to standout drops, we curate styles our community asks for and keeps coming back to.</p>
+            <p>Prefer to see and feel the fit? Visit our physical shop and try on your favorites with help from our team.</p>
+            <div class="about-cta-row">
+                <button class="about-btn" onclick="window.location.href='product-list.html'">Shop Online</button>
+                <button class="about-btn secondary" onclick="window.location.href='home.html#newArrivalsCarousel'">See What's New</button>
+            </div>
+        </section>
+        <aside class="about-card">
+            <h2>Visit Our Store</h2>
+            <div class="about-kv">
+                <div class="k">Address</div>
+                <div class="v" id="storeAddress">TBD — Add full address</div>
+                <div class="k">Hours</div>
+                <div class="v" id="storeHours">TBD — e.g., Mon–Sun, 10:00 AM – 8:00 PM</div>
+                <div class="k">Contact</div>
+                <div class="v" id="storeContact">TBD — Phone / Messenger</div>
+            </div>
+            <a class="map-link" href="https://maps.google.com" target="_blank" rel="noopener">Get Directions <span style="display:inline-block;width:0;height:0;border-left:8px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;"></span></a>
+        </aside>
+    </main>
+
+    <footer class="footer-section">
+        <div class="site-container">
+            <div class="footer-row">
+                <div class="footer-left">
+                    <div class="footer-header">Have questions?</div>
+                    <div class="footer-subheader">Contact us at our facebook page</div>
+                    <div class="footer-subheader" style="margin-top:18px;">Or via phone/email</div>
+                    <div class="footer-divider"></div>
+                    <div class="footer-note">All product names, logos, brands, trademarks, and registered trademarks are the property of their respective owners. All company, product, and service names used on this website are for identification purposes only. Use of these names, logos, and brands does not imply endorsement or affiliation.<br><br>© 2025 Shoe Pao Footwear. All rights reserved.</div>
+                </div>
+                <div class="footer-right">
+                    <a href="about-us.html" class="footer-link">About Us</a>
+                    <a href="shipping.html" class="footer-link">Shipping</a>
+                    <a href="returns.html" class="footer-link">Returns & Exchanges</a>
+                    <a href="privacy.html" class="footer-link">Privacy Policy</a>
+                    <a href="terms.html" class="footer-link">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Basic nav helpers used on About page
+    function goToSale(){ window.location.href = 'product-list.html?filter=sale'; }
+    function goToNewArrivals(){ window.location.href = 'product-list.html?filter=new'; }
+    function goToBrand(brand){ window.location.href = 'product-list.html?brand=' + encodeURIComponent(brand); }
+    function goToProductList(){ window.location.href = 'product-list.html'; }
+    function goToUserPage(){ try{ var p = JSON.parse(sessionStorage.getItem('profile')||localStorage.getItem('profile')||'null'); if(!p || !p.email){ window.location.href = 'login.html'; return; } }catch(e){ window.location.href = 'login.html'; return; } window.location.href = 'profile.html'; }
+    function goToCartPage(){ window.location.href = 'cart.html'; }
+    function toggleSearchBox(){ var box = document.getElementById('searchBox'); box.style.display = (box.style.display === 'block') ? 'none' : 'block'; if(box.style.display==='block'){ document.getElementById('searchInput').focus(); } }
+    function searchKeyDown(e){ if(e.key==='Enter'){ var val = document.getElementById('searchInput').value.trim(); if(val){ window.location.href = 'product-list.html?search=' + encodeURIComponent(val); } } }
+    // Brands dropdown
+    document.addEventListener('DOMContentLoaded', function(){
+        var brandNav = document.getElementById('brandNav');
+        var brandDropdown = document.getElementById('brandDropdown');
+        if(brandNav && brandDropdown){
+            brandNav.addEventListener('click', function(ev){ ev.stopPropagation(); var showing = brandDropdown.style.display === 'flex'; brandDropdown.style.display = showing ? 'none' : 'flex'; });
+            document.addEventListener('click', function(){ brandDropdown.style.display = 'none'; });
+        }
+    });
+    </script>
+
+    <!-- ===== Cart Overlay + Sidebar HTML (universal) ===== -->
+    <div id="cartOverlay" class="cart-overlay" aria-hidden="true"></div>
+    <aside id="cartSidebar" class="cart-sidebar" aria-hidden="true" role="complementary" style="display:none;">
+        <div class="cart-header-row">
+            <div>
+                <span class="cart-header-title">Cart (<span id="cartCount">0</span>)</span>
+            </div>
+            <button id="closeCartBtn" class="cart-close" aria-label="Close cart"><img src="IMAGE/X.png" alt="Close" style="width:20px;height:20px;"></button>
+        </div>
+        <div class="cart-divider"></div>
+        <div id="cartItems" class="cart-items">
+            <div class="cart-empty">Your cart is empty</div>
+        </div>
+        <div class="cart-divider"></div>
+        <div class="cart-subtotal-row">
+            <span class="cart-subtotal-label">Subtotal</span>
+            <span id="cartSubtotal" class="cart-subtotal-value">₱0.00</span>
+        </div>
+        <button id="checkoutBtn" class="cart-checkout-btn">Checkout</button>
+    </aside>
+    <!-- ===== Cart Sidebar Behavior (universal) ===== -->
+    <script>
+    (function(){
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        function formatPHP(amount) { try { return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount); } catch (e) { return '₱' + Number(amount).toFixed(2); } }
+        function saveCartToLocalStorage() { localStorage.setItem('cart', JSON.stringify(cart)); }
+        const cartOverlay = document.getElementById('cartOverlay');
+        const cartSidebar = document.getElementById('cartSidebar');
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartCountEl = document.getElementById('cartCount');
+        const cartSubtotalEl = document.getElementById('cartSubtotal');
+        const closeCartBtn = document.getElementById('closeCartBtn');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        function getNavCartButton() { const img = document.querySelector('img[alt="Cart"]'); if (!img) return null; return img.closest('button'); }
+        function openCartSidebar() { cartOverlay.classList.add('show'); cartSidebar.classList.add('open'); cartSidebar.style.display='block'; document.body.style.overflow='hidden'; cartSidebar.setAttribute('aria-hidden','false'); cartOverlay.setAttribute('aria-hidden','false'); }
+        function closeCartSidebar() { cartOverlay.classList.remove('show'); cartSidebar.classList.remove('open'); cartSidebar.style.display='none'; document.body.style.overflow=''; cartSidebar.setAttribute('aria-hidden','true'); cartOverlay.setAttribute('aria-hidden','true'); }
+        function renderCart() {
+            cartItemsContainer.innerHTML = '';
+            if (cart.length === 0) {
+                const empty = document.createElement('div'); empty.className = 'cart-empty'; empty.textContent = 'Your cart is empty'; cartItemsContainer.appendChild(empty);
+                cartCountEl.textContent = 0; cartSubtotalEl.textContent = formatPHP(0); saveCartToLocalStorage(); return;
+            }
+            let subtotal = 0; let totalQty = 0;
+            cart.forEach((item, index) => {
+                subtotal += item.price * item.quantity; totalQty += item.quantity;
+                const box = document.createElement('div'); box.className = 'cart-item-box';
+                const img = document.createElement('img'); img.className = 'cart-item-img'; img.src = item.image || 'IMAGE/NIKE1.png'; img.alt = item.title || 'Product';
+                const middle = document.createElement('div'); middle.className = 'cart-item-middle';
+                const title = document.createElement('div'); title.className = 'cart-item-title'; title.textContent = item.title;
+                const brand = document.createElement('div'); brand.className = 'cart-item-brand'; brand.textContent = item.brand;
+                const size = document.createElement('div'); size.className = 'cart-item-size'; size.textContent = 'Size: ' + (item.size || '');
+                const qtyControls = document.createElement('div'); qtyControls.className = 'cart-quantity-controls';
+                const lessenBtn = document.createElement('button'); lessenBtn.className = 'qty-btn decrease'; lessenBtn.setAttribute('data-index', index);
+                const lessenImg = document.createElement('img'); lessenImg.src = 'IMAGE/LessenBTN.png'; lessenImg.alt = '-'; lessenImg.style.width = '22px'; lessenImg.style.height = '22px'; lessenBtn.appendChild(lessenImg);
+                const qtyText = document.createElement('span'); qtyText.className = 'cart-item-qty'; qtyText.textContent = item.quantity;
+                const addBtn = document.createElement('button'); addBtn.className = 'qty-btn increase'; addBtn.setAttribute('data-index', index);
+                const addImg = document.createElement('img'); addImg.src = 'IMAGE/AddBTN.png'; addImg.alt = '+'; addImg.style.width = '22px'; addImg.style.height = '22px'; addBtn.appendChild(addImg);
+                qtyControls.appendChild(lessenBtn); qtyControls.appendChild(qtyText); qtyControls.appendChild(addBtn);
+                middle.appendChild(title); middle.appendChild(brand); middle.appendChild(size); middle.appendChild(qtyControls);
+                const removeBtn = document.createElement('button'); removeBtn.className = 'cart-item-remove'; removeBtn.setAttribute('data-index', index);
+                const trashImg = document.createElement('img'); trashImg.src = 'IMAGE/TrashIcon.png'; trashImg.alt = 'Remove'; trashImg.style.width = '18px'; trashImg.style.height = '18px'; removeBtn.appendChild(trashImg);
+                const priceEl = document.createElement('div'); priceEl.className = 'cart-item-price'; priceEl.textContent = formatPHP(item.price * item.quantity);
+                box.appendChild(img); box.appendChild(middle); box.appendChild(removeBtn); box.appendChild(priceEl); cartItemsContainer.appendChild(box);
+            });
+            cartCountEl.textContent = totalQty; cartSubtotalEl.textContent = formatPHP(subtotal); attachCartEvents();
+        }
+        function attachCartEvents() {
+            document.querySelectorAll('.qty-btn.decrease').forEach(btn => { btn.onclick = function(){ const idx = parseInt(btn.getAttribute('data-index'),10); if(!isNaN(idx) && cart[idx]){ if(cart[idx].quantity>1){ cart[idx].quantity--; } renderCart(); saveCartToLocalStorage(); } }; });
+            document.querySelectorAll('.qty-btn.increase').forEach(btn => { btn.onclick = function(){ const idx = parseInt(btn.getAttribute('data-index'),10); if(!isNaN(idx) && cart[idx]){ cart[idx].quantity++; renderCart(); saveCartToLocalStorage(); } }; });
+            document.querySelectorAll('.cart-item-remove').forEach(btn => { btn.onclick = function(){ const idx = parseInt(btn.getAttribute('data-index'),10); if(!isNaN(idx)){ cart.splice(idx,1); renderCart(); saveCartToLocalStorage(); } }; });
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            const navCartBtn = getNavCartButton();
+            if(navCartBtn){ navCartBtn.removeAttribute('onclick'); navCartBtn.addEventListener('click', function(e){ e.preventDefault(); openCartSidebar(); }); }
+            if(closeCartBtn) closeCartBtn.addEventListener('click', closeCartSidebar);
+            if(cartOverlay) cartOverlay.addEventListener('click', closeCartSidebar);
+            renderCart();
+            if(checkoutBtn){ checkoutBtn.addEventListener('click', function(){ window.location.href = 'checkout.html'; }); }
+        });
+    })();
+    </script>
+    <script src="cart-storage.js"></script>
+</body>
+</html>
