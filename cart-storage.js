@@ -28,8 +28,8 @@ function addToCart(product) {
     try {
         var cart = getCart();
         var maxAllowed = getMaxAllowedForProduct(product);
-        // If product stock is 0, don't add
-        if (maxAllowed === 0) {
+        // If product stock is 0 and not marked pre-order, don't add
+        if (maxAllowed === 0 && !product.preOrder) {
             return { success: false, reason: 'out_of_stock' };
         }
         // Prevent duplicates by title+brand+size (if size exists)
@@ -44,6 +44,8 @@ function addToCart(product) {
                 return { success: false, reason: 'max_reached', maxAllowed: maxAllowed };
             } else {
                 found.qty = newQty;
+                // preserve preOrder flag if either existing or incoming is pre-order
+                if (product.preOrder || found.preOrder) found.preOrder = true;
             }
         } else {
             var incoming = product.qty || product.quantity || 1;
@@ -98,6 +100,11 @@ function getMaxAllowedForProduct(product) {
         // (the live site may not seed inventory for all visitors). When inventory exists,
         // enforce critical-level rule: if stock < 6 allow only 1 per customer; otherwise
         // allow up to the available stock (no lower cap like '3').
+        if (product && product.preOrder === true) {
+            // Allow pre-orders up to 3 items by default (can be tuned)
+            var cap = Number(product.preOrderMax || 3);
+            return (isFinite(cap) && cap > 0) ? cap : 3;
+        }
         if (!invItem) {
             return Number.POSITIVE_INFINITY; // no artificial cap
         }

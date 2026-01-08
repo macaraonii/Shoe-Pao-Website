@@ -690,6 +690,56 @@
             document.addEventListener('DOMContentLoaded', initNewArrivalsCarousel);
         })();
     </script>
+    <script>
+    // Ensure storefront inventory mirrors admin `shoeInventoryData`
+    document.addEventListener('DOMContentLoaded', function(){
+        try{
+            var adminProducts = JSON.parse(localStorage.getItem('shoeInventoryData')||'null');
+            var newInv = [];
+            if(Array.isArray(adminProducts) && adminProducts.length){
+                adminProducts.forEach(function(p){
+                    var baseImg = (Array.isArray(p.images) && p.images.length) ? p.images[0] : '';
+                    (Array.isArray(p.colors) ? p.colors : []).forEach(function(c){
+                        var sizesMap = {};
+                        (Array.isArray(c.sizes) ? c.sizes : []).forEach(function(s){ sizesMap[String(s.eu)] = Number(s.stock||0); });
+                        newInv.push({
+                            id: p.sku || p.id || ('gen-' + Math.random().toString(36).slice(2,9)),
+                            name: (p.model||'') + (c.name?(' '+c.name):''),
+                            brand: p.brand || '',
+                            color: c.name || '',
+                            image: baseImg || 'IMAGE/NIKE1.png',
+                            sizes: sizesMap,
+                            price: Number((p.pricing && (p.pricing.sale||p.pricing.original)) || 0),
+                            originalPrice: Number((p.pricing && p.pricing.original) || 0),
+                            productId: p.id || '',
+                            colorId: c.id || '',
+                            createdAt: p.createdAt || null,
+                            gender: p.gender || ''
+                        });
+                    });
+                });
+            }
+            localStorage.setItem('inventory', JSON.stringify(newInv));
+        }catch(e){}
+    });
+    // Helper: base model name (strip trailing color from title)
+    function baseModelFromTitle(title){
+        try{
+            var name = String(title||'');
+            // heuristic: remove last word if it matches a known color present in inventory entries
+            var inv = JSON.parse(localStorage.getItem('inventory')||'[]');
+            if(Array.isArray(inv) && inv.length){
+                var parts = name.split(/\s+/);
+                if(parts.length > 1){
+                    var last = parts[parts.length-1];
+                    var hasColor = inv.some(function(i){ return (i && i.color) && String(i.color).toLowerCase() === String(last).toLowerCase(); });
+                    if(hasColor){ parts.pop(); name = parts.join(' '); }
+                }
+            }
+            return name.trim();
+        }catch(e){ return String(title||''); }
+    }
+    </script>
     <!-- Banner 1: New Arrivals (Carousel) -->
     <section class="banner-section" id="newArrivalsCarousel">
         <div class="carousel" aria-label="New Arrivals carousel">
@@ -870,11 +920,43 @@
 
     <script>
     function viewProduct(brand, name, price, img, badge) {
+        // Legacy keys
         localStorage.setItem('productBrand', brand);
         localStorage.setItem('productTitle', name);
         localStorage.setItem('productPrice', price);
         localStorage.setItem('productImg', img);
         localStorage.setItem('productBadge', badge);
+        // Build grouped modelData from inventory for product-view
+        try{
+            var inv = JSON.parse(localStorage.getItem('inventory')||'[]');
+            var base = baseModelFromTitle(name);
+            var matches = Array.isArray(inv) ? inv.filter(function(i){
+                if(!i) return false;
+                return String(i.brand||'').toLowerCase() === String(brand||'').toLowerCase()
+                    && String(baseModelFromTitle(i.name||'')).toLowerCase() === String(base||'').toLowerCase();
+            }) : [];
+            if(matches.length){
+                var modelData = {
+                    brand: brand||'',
+                    baseName: base||'',
+                    variants: matches.map(function(v){
+                        return {
+                            id: v.id||'',
+                            name: v.name||'',
+                            color: v.color||'',
+                            image: v.image||'',
+                            price: Number(v.price||0),
+                            sizes: v.sizes||{},
+                            gender: v.gender||''
+                        };
+                    })
+                };
+                localStorage.setItem('modelData', JSON.stringify(modelData));
+            } else {
+                // Clear modelData if no match to avoid stale variants
+                localStorage.removeItem('modelData');
+            }
+        }catch(e){ /* ignore */ }
         window.location.href = 'product-view.html';
     }
     // Scroll to top

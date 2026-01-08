@@ -100,7 +100,9 @@
       },
       description,
       sku: sku || generateProductSKU(brand, model, category),
-      colors: []
+      colors: [],
+      tagsManual: [],
+      createdAt: new Date().toISOString()
     };
   }
 
@@ -138,6 +140,16 @@
         p.sku = generateProductSKU(p.brand, p.model, p.category);
         changed = true;
       }
+    });
+    if (changed) saveAll();
+  }
+
+  // Ensure createdAt exists for legacy products
+  function backfillCreatedAt() {
+    if (!Array.isArray(state.products) || !state.products.length) return;
+    let changed = false;
+    state.products.forEach(p => {
+      if (!p.createdAt) { p.createdAt = new Date().toISOString(); changed = true; }
     });
     if (changed) saveAll();
   }
@@ -196,6 +208,30 @@
     const filterStatus = qs('#filterStatus') ? qs('#filterStatus').value : '';
     const threshold = state.settings.lowStockThreshold;
 
+    // Compute best-seller products (all-time, by units)
+    const byProductQty = new Map();
+    state.sales.forEach(s => byProductQty.set(s.productId, (byProductQty.get(s.productId) || 0) + s.qty));
+    const bestIds = new Set(Array.from(byProductQty.entries()).sort((a,b) => b[1]-a[1]).slice(0,5).map(([id]) => id));
+
+    function computeTags(p) {
+      const tags = [];
+      const now = Date.now();
+      const created = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+      const ageDays = created ? Math.floor((now - created) / (24*3600*1000)) : Infinity;
+      const isNew = ageDays <= 14 && p.status === 'active';
+      const isSale = (parseNum(p.pricing.sale,0) > 0) && (parseNum(p.pricing.sale,0) < parseNum(p.pricing.original,0)) && p.status === 'active';
+      const total = totalStockForProduct(p);
+      const isPre = (total === 0) && p.status === 'active';
+      const isBest = bestIds.has(p.id);
+      if (isNew) tags.push('New');
+      if (isSale) tags.push('Sale');
+      if (isPre) tags.push('Pre-Order');
+      if (isBest) tags.push('Best Seller');
+      const manual = Array.isArray(p.tagsManual) ? p.tagsManual : [];
+      // Merge manual and auto tags, deduped
+      return Array.from(new Set([ ...manual, ...tags ]));
+    }
+
     const filtered = state.products.filter(p => {
       const matchesText = !text || [p.brand, p.model, p.category].join(' ').toLowerCase().includes(text) || p.colors.some(c => c.name.toLowerCase().includes(text));
       const matchesBrand = !filterBrand || p.brand === filterBrand;
@@ -223,6 +259,8 @@
       const price = `₱${p.pricing.sale || p.pricing.original || 0}`;
       const bulkBox = state.ui.bulkMode ? `<input type="checkbox" class="bulkSel" data-id="${p.id}" ${state.ui.selectedProductIds.has(p.id) ? 'checked' : ''}/>` : '';
       const catDisplay = (p.category || '').trim();
+      const tags = computeTags(p);
+      const tagsHtml = tags.length ? tags.map(t => `<span class="tag ${t.toLowerCase().replace(/\s+/g,'-')}">${t}</span>`).join(' ') : '';
       return `<tr>
         <td class="bulk-col">${bulkBox}</td>
         <td>${p.brand}</td>
@@ -230,6 +268,7 @@
         <td>${p.model}</td>
         <td>${catDisplay}</td>
         <td class="status ${p.status}">${p.status}</td>
+        <td class="tags-cell">${tagsHtml || ''}</td>
         <td class="colors-cell">${colors || '<span class=\"badge out\">No colors</span>'}</td>
         <td><span class="badge ${totalStatus}">${total}</span></td>
         <td>${price}</td>
@@ -284,6 +323,12 @@
       pOrig.value = p.pricing.original || ''; pSale.value = p.pricing.sale || ''; pCost.value = p.pricing.cost || '';
       if (skuEl) skuEl.value = p.sku || '';
       if (descEl) descEl.value = p.description || '';
+      // Manual tags
+      const manual = Array.isArray(p.tagsManual) ? p.tagsManual : [];
+      const tagNew = qs('#tagNew'); if (tagNew) tagNew.checked = manual.includes('New');
+      const tagSale = qs('#tagSale'); if (tagSale) tagSale.checked = manual.includes('Sale');
+      const tagPre = qs('#tagPreOrder'); if (tagPre) tagPre.checked = manual.includes('Pre-Order');
+      const tagBest = qs('#tagBestSeller'); if (tagBest) tagBest.checked = manual.includes('Best Seller');
       state.ui.productModalImages = Array.isArray(p.images) ? p.images.map(url => ({ url, name: displayNameFromUrl(url) })) : [];
       renderImagesList();
       // Hide initial variant builder on edit; use Variants modal instead
@@ -293,6 +338,11 @@
       brand.value = ''; model.value = ''; cat.value = ''; if (genderSel) genderSel.value = 'Unisex'; statusSel.value = 'active'; pOrig.value = ''; pSale.value = ''; pCost.value = '';
       if (skuEl) skuEl.value = '';
       if (descEl) descEl.value = '';
+      // Clear manual tags on add
+      const tagNew = qs('#tagNew'); if (tagNew) tagNew.checked = false;
+      const tagSale = qs('#tagSale'); if (tagSale) tagSale.checked = false;
+      const tagPre = qs('#tagPreOrder'); if (tagPre) tagPre.checked = false;
+      const tagBest = qs('#tagBestSeller'); if (tagBest) tagBest.checked = false;
       // Show initial variant builder on add
       const initSec = qs('#initialVariantSection'); if (initSec) initSec.style.display = 'block';
       state.ui.productModalColors = [];
@@ -315,6 +365,13 @@
     const pCost = parseNum(qs('#priceCost').value, 0);
     const skuPreview = (qs('#prodSKU')?.value || '').trim();
     const desc = (qs('#prodDescription')?.value || '').trim();
+
+    // Manual tags from modal
+    const manual = [];
+    const tagNew = qs('#tagNew'); if (tagNew && tagNew.checked) manual.push('New');
+    const tagSale = qs('#tagSale'); if (tagSale && tagSale.checked) manual.push('Sale');
+    const tagPre = qs('#tagPreOrder'); if (tagPre && tagPre.checked) manual.push('Pre-Order');
+    const tagBest = qs('#tagBestSeller'); if (tagBest && tagBest.checked) manual.push('Best Seller');
 
     if (!brand || !model) { alert('Brand and Model are required'); return; }
     if (pOrig <= 0) { alert('Original price is required'); return; }
@@ -340,6 +397,7 @@
       if (!p.sku) p.sku = generateProductSKU(brand, model, cat);
       p.description = desc;
       p.images = state.ui.productModalImages.map(it => it.url);
+      p.tagsManual = manual;
     } else {
       // Require at least one color with sizes when adding
       const colors = state.ui.productModalColors.filter(c => (c.name || '').trim().length);
@@ -350,6 +408,7 @@
       }
       const newP = newProduct({ brand, model, category: cat, status: statusSel, images: [], pricing: { original: pOrig, sale: pSale, cost: pCost }, description: desc, gender: genderSel || 'Unisex' });
       newP.images = state.ui.productModalImages.map(it => it.url);
+      newP.tagsManual = manual;
       // Copy colors and sizes
       newP.colors = colors.map(c => ({ id: c.id, name: c.name, code: c.code, sizes: c.sizes.map(s => ({ eu: s.eu, stock: clampNum(parseNum(s.stock,0), 0, 9999), sku: s.sku || '' })) }));
       state.products.push(newP);
@@ -848,6 +907,38 @@
   function renderSettings() { qs('#lowStockThreshold').value = state.settings.lowStockThreshold; }
   function saveSettings() { state.settings.lowStockThreshold = clampNum(parseNum(qs('#lowStockThreshold').value, 3), 1, 999); saveAll(); renderAll(); }
 
+  // Publish to storefront: build simplified inventory rows from admin products
+  function publishInventoryToStorefront() {
+    try {
+      const out = [];
+      state.products.forEach(p => {
+        const baseImg = (Array.isArray(p.images) && p.images.length) ? p.images[0] : '';
+        (Array.isArray(p.colors) ? p.colors : []).forEach(c => {
+          const sizesMap = {};
+          (Array.isArray(c.sizes) ? c.sizes : []).forEach(s => { sizesMap[String(s.eu)] = Number(s.stock || 0); });
+          out.push({
+            id: p.sku || p.id || uid('row'),
+            name: `${p.model || ''}${c.name ? ' ' + c.name : ''}`.trim(),
+            brand: p.brand || '',
+            color: c.name || '',
+            image: baseImg || 'IMAGE/NIKE1.png',
+            sizes: sizesMap,
+            price: parseNum(p.pricing?.sale, 0) || parseNum(p.pricing?.original, 0),
+            originalPrice: parseNum(p.pricing?.original, 0),
+            productId: p.id || '',
+            colorId: c.id || '',
+            createdAt: p.createdAt || null,
+            gender: p.gender || ''
+          });
+        });
+      });
+      localStorage.setItem('inventory', JSON.stringify(out));
+      alert(`Published ${out.length} variant rows to storefront inventory.`);
+    } catch (e) {
+      alert('Failed to publish inventory.');
+    }
+  }
+
   // Render all
   function renderAll() {
     populateFilters();
@@ -877,6 +968,7 @@
 
     qs('#bulkRestock').addEventListener('click', openBulkRestock);
     qs('#applyBulkRestockBtn').addEventListener('click', (e) => { e.preventDefault(); applyBulkRestock(); });
+    const publishBtn = qs('#publishInventoryBtn'); if (publishBtn) publishBtn.addEventListener('click', (e) => { e.preventDefault(); publishInventoryToStorefront(); });
     const bulkPriceMethodSel = qs('#bulkPriceMethod');
     const bulkPriceValueInp = qs('#bulkPriceValue');
     if (bulkPriceMethodSel && bulkPriceValueInp) {
@@ -937,6 +1029,7 @@
     loadAll();
     seedSampleIfEmpty();
     backfillSkus();
+    backfillCreatedAt();
     wireEvents();
     renderAll();
   }

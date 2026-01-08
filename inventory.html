@@ -54,6 +54,7 @@
         <h1>Footwear Inventory Manager</h1>
         <div class="header-actions">
             <button id="addProductBtn" class="primary">Add Product</button>
+            <button id="publishInventoryBtn" class="secondary" title="Publish current inventory to storefront">Publish to Site</button>
             <div class="searchbar">
                 <input id="searchInput" type="text" placeholder="Search brand, model, color, size" />
                 <select id="filterBrand"><option value="">All Brands</option></select>
@@ -86,15 +87,15 @@
             <table class="products-table">
                 <colgroup>
                     <col style="width:36px" />
-                    <col style="width:14%" />
-                    <col style="width:10%" />
-                    <col style="width:14%" />
                     <col style="width:12%" />
+                    <col style="width:9%" />
+                    <col style="width:11%" />
+                    <col style="width:9%" />
+                    <col style="width:8%" />
                     <col style="width:10%" />
-                    <col />
-                    <col style="width:10%" />
-                    <col style="width:10%" />
-                    <col style="width:12%" />
+                    <col style="width:auto" />
+                    <col style="width:8%" />
+                    <col style="width:8%" />
                 </colgroup>
                 <thead>
                     <tr>
@@ -104,6 +105,7 @@
                         <th>Model</th>
                         <th>Category</th>
                         <th>Status</th>
+                        <th>Tags</th>
                         <th class="colors-col">Colors</th>
                         <th>Total Stock</th>
                         <th>Price</th>
@@ -227,6 +229,16 @@
                 <input id="priceSale" type="number" min="0" step="0.01" placeholder="Sale Price" />
                 <input id="priceCost" type="number" min="0" step="0.01" placeholder="Cost" />
                 <textarea id="prodDescription" placeholder="Description (optional)" rows="3"></textarea>
+            </div>
+            <div id="tagsSection" class="tags-section">
+                <h3>Manual Tags</h3>
+                <div class="tag-checkboxes" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
+                    <label><input type="checkbox" id="tagNew" /> New</label>
+                    <label><input type="checkbox" id="tagSale" /> Sale</label>
+                    <label><input type="checkbox" id="tagPreOrder" /> Pre-Order</label>
+                    <label><input type="checkbox" id="tagBestSeller" /> Best Seller</label>
+                </div>
+                <p class="muted" style="margin:0;">Manual tags are added on top of auto tags.</p>
             </div>
             <div id="imagesSection">
                 <h3>Images</h3>
