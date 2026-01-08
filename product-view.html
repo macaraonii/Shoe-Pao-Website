@@ -77,6 +77,7 @@
             justify-content: center;
             min-width: 380px;
             min-height: 380px;
+            position: relative;
         }
         .productview-main-img {
             width: 380px;
@@ -88,6 +89,7 @@
             border-radius: 18px;
             background: #f7f7f7;
             padding: 8px; /* slight inner padding so edges aren't flush when contain adds empty space */
+            transition: opacity 0.35s ease;
         }
         .productview-right {
             flex: 1;
@@ -113,11 +115,20 @@
             justify-content: space-between;
             gap: 18px;
         }
+        .productview-price-col { display:flex; align-items: baseline; gap:10px }
+        .productview-color-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap }
+        .productview-color-label { font-size:1.05rem; font-weight:500; color:#222 }
+        .productview-color-swatch { width:36px; height:36px; border-radius:50%; border:2px solid #ddd; overflow:hidden; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:box-shadow .18s,border-color .18s; background:#f7f7f7 }
+        .productview-color-swatch img { width:100%; height:100%; object-fit:cover }
+        .productview-color-swatch.selected { border-color:#222; box-shadow:0 0 0 2px #2222 }
+        .productview-color-item { display:flex; flex-direction:column; align-items:center; gap:4px }
+        .productview-color-name { font-size:0.85rem; color:#444; max-width:78px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
         .productview-price {
             font-size: 1.25rem;
             font-weight: 600;
             color: #222;
         }
+        .productview-price-range { font-size:0.95rem; font-weight:500; color:#555; display:none }
         .productview-availability {
             font-size: 1.05rem;
             color: #222;
@@ -1332,15 +1343,23 @@
         </div>
         <div class="productview-center">
             <img src="IMAGE/NIKE1.png" class="productview-main-img" id="mainShoeImg" alt="Main Shoe">
+            <img src="IMAGE/NIKE1.png" class="productview-main-img" id="mainShoeImgOverlay" alt="Main Shoe Preview" style="position:absolute;opacity:0;pointer-events:none;">
         </div>
         <div class="productview-right">
             <div class="productview-brand" id="productBrand">Nike</div>
             <div class="productview-title" id="productTitle">Nike P6000 Shadow</div>
             <div class="productview-price-row">
-                <span class="productview-price" id="productPrice">₱2,395.00</span>
+                <div class="productview-price-col">
+                    <span class="productview-price" id="productPrice">₱2,395.00</span>
+                    <span class="productview-price-range" id="productPriceRange">From ₱0.00</span>
+                </div>
                 <span class="productview-availability">Availability: <b>In Stock</b></span>
             </div>
             <div class="productview-caption">Delivery/shipping calculated at checkout.</div>
+                <div class="productview-color-row" id="colorOptionsRow" style="display:none;">
+                    <span class="productview-color-label">Colors:</span>
+                    <div id="colorOptions" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+                </div>
             <div class="productview-size-label">Select Size</div>
             <div class="productview-size-row">
                 <div id="sizeButtons" style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -1746,18 +1765,17 @@ On page.</div>
                         var addBtnEl = document.querySelector('.productview-cart-btn');
                         if (qty === null) {
                             elStock.textContent = 'Stock: not available for this size';
-                            if(addBtnEl) { addBtnEl.disabled = false; addBtnEl.style.opacity = ''; }
+                            if(addBtnEl) { addBtnEl.disabled = false; addBtnEl.style.opacity = ''; addBtnEl.textContent = 'Add to Cart'; addBtnEl.dataset.preorder = '0'; }
                             elStock.style.color = '';
                         } else if (qty <= 0) {
-                            // show the numeric value (0) instead of leaving the box empty
-                            elStock.textContent = 'Stock: 0 available';
-                            // visually mark out of stock in red and prevent adding to cart
+                            // Out of stock: allow pre-order
+                            elStock.textContent = 'Out of stock — available for pre-order';
                             elStock.style.color = '#b71c1c';
-                            if(addBtnEl) { addBtnEl.disabled = true; addBtnEl.style.opacity = '0.6'; }
+                            if(addBtnEl) { addBtnEl.disabled = false; addBtnEl.style.opacity = ''; addBtnEl.textContent = 'Pre-Order'; addBtnEl.dataset.preorder = '1'; }
                         } else {
                             elStock.textContent = 'Stock: ' + qty + ' available';
                             elStock.style.color = '';
-                            if(addBtnEl) { addBtnEl.disabled = false; addBtnEl.style.opacity = ''; }
+                            if(addBtnEl) { addBtnEl.disabled = false; addBtnEl.style.opacity = ''; addBtnEl.textContent = 'Add to Cart'; addBtnEl.dataset.preorder = '0'; }
                         }
                     } else if (!eu) {
                         elStock.textContent = '';
@@ -1821,6 +1839,10 @@ On page.</div>
 
     // Load product data from localStorage
     window.addEventListener('DOMContentLoaded', function() {
+        // If navigated from grouped model, prefer modelData
+        var modelData = null;
+        try{ modelData = JSON.parse(localStorage.getItem('modelData')||'null'); }catch(e){ modelData = null; }
+
         var brand = localStorage.getItem('productBrand');
         var title = localStorage.getItem('productTitle');
         var price = localStorage.getItem('productPrice');
@@ -1831,6 +1853,128 @@ On page.</div>
         if (price) document.getElementById('productPrice').textContent = price;
         var mainImgEl = document.getElementById('mainShoeImg');
         if (img) mainImgEl.src = img;
+
+        // Color variants rendering (grouped model)
+        (function(){
+            if(!modelData || !modelData.variants || !modelData.variants.length) return;
+            var colorRow = document.getElementById('colorOptionsRow');
+            var colorWrap = document.getElementById('colorOptions');
+            var centerEl = document.querySelector('.productview-center');
+            if(!colorRow || !colorWrap) return;
+            colorRow.style.display = '';
+            var selectedIndex = 0;
+
+            function formatPrice(n){ return 'P' + Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2}); }
+            function applyVariant(variant){
+                try{
+                    // Update legacy keys so stock/size helpers work
+                    localStorage.setItem('productBrand', modelData.brand||'');
+                    localStorage.setItem('productTitle', variant.name || ((modelData.baseName||'') + (variant.color?(' '+variant.color):'')) );
+                    localStorage.setItem('productPrice', formatPrice(variant.price||0));
+                    localStorage.setItem('productImg', variant.image || '');
+                }catch(e){}
+                // Update UI
+                var bEl = document.getElementById('productBrand'); if(bEl) bEl.textContent = modelData.brand||'';
+                var tEl = document.getElementById('productTitle'); if(tEl) tEl.textContent = localStorage.getItem('productTitle')||variant.name||'';
+                var pEl = document.getElementById('productPrice'); if(pEl) pEl.textContent = formatPrice(variant.price||0);
+                if(variant.image){ setMainImageSrc(variant.image); }
+                // update thumbnails to use same image for now
+                document.querySelectorAll('.productview-thumb').forEach(function(th){ th.src = variant.image || th.src; });
+                // flip for Nike
+                try {
+                    var mEl = document.getElementById('mainShoeImg');
+                    var mOv = document.getElementById('mainShoeImgOverlay');
+                    if ((modelData.brand||'').toLowerCase().indexOf('nike')!==-1) {
+                        if(mEl) mEl.style.transform = 'scaleX(-1)';
+                        if(mOv) mOv.style.transform = 'scaleX(-1)';
+                        document.querySelectorAll('.productview-thumb').forEach(function(t){ t.style.transform = 'scaleX(-1)'; t.style.transformOrigin = 'center'; });
+                    } else {
+                        if(mEl) mEl.style.transform = '';
+                        if(mOv) mOv.style.transform = '';
+                        document.querySelectorAll('.productview-thumb').forEach(function(t){ t.style.transform = ''; });
+                    }
+                }catch(e){}
+                // Reset size selection and refresh availability for this variant
+                try{
+                    document.querySelectorAll('#sizeButtons .product-size-btn').forEach(function(x){ x.classList.remove('primary'); x.classList.add('ghost'); });
+                }catch(_){ }
+                updateSizeButtons();
+                var sel = document.querySelector('#sizeButtons .product-size-btn.primary');
+                if(sel) selectSize(sel); else { var stockEl = document.getElementById('sizeStock'); if(stockEl) stockEl.textContent=''; var convEl=document.getElementById('sizeConversion'); if(convEl) convEl.textContent='Select a size to see the US equivalent.'; }
+            }
+            function setMainImageSrc(src){
+                try{
+                    var base = document.getElementById('mainShoeImg');
+                    var over = document.getElementById('mainShoeImgOverlay');
+                    if(!base || !over){ if(base){ base.src = src; } return; }
+                    over.style.transition = 'none'; over.style.opacity = '0'; over.src = src;
+                    over.onload = function(){
+                        over.onload = null;
+                        requestAnimationFrame(function(){ over.style.transition = 'opacity 0.35s ease'; over.style.opacity = '1'; });
+                        setTimeout(function(){ base.src = src; over.style.opacity = '0'; }, 420);
+                    };
+                }catch(_){}
+            }
+
+            // Show price range (From ₱...) if variants have different prices
+            try{
+                var prices = modelData.variants.map(function(v){ return Number(v.price||0); });
+                var minP = Math.min.apply(null, prices);
+                var maxP = Math.max.apply(null, prices);
+                var pr = document.getElementById('productPriceRange');
+                if(pr){
+                    if(isFinite(minP) && isFinite(maxP) && minP !== maxP){ pr.style.display = 'inline'; pr.textContent = 'From ' + formatPrice(minP); }
+                    else { pr.style.display = 'none'; }
+                }
+            }catch(e){}
+
+            // Build swatches with color name
+            colorWrap.innerHTML = '';
+            modelData.variants.forEach(function(v, idx){
+                var item = document.createElement('div'); item.className = 'productview-color-item';
+                var sw = document.createElement('button');
+                sw.type = 'button';
+                sw.className = 'productview-color-swatch';
+                sw.title = v.color || v.name || 'Color';
+                var imgEl = document.createElement('img'); imgEl.alt = v.color||'color'; imgEl.src = v.image || 'IMAGE/NIKE1.png';
+                sw.appendChild(imgEl);
+                sw.addEventListener('click', function(){
+                    // set selected state
+                    document.querySelectorAll('.productview-color-swatch').forEach(function(x){ x.classList.remove('selected'); });
+                    sw.classList.add('selected');
+                    selectedIndex = idx;
+                    applyVariant(v);
+                });
+                // pause shuffle and preview on swatch hover
+                sw.addEventListener('mouseenter', function(){ stopVariantShuffle(); setMainImageSrc(v.image || imgEl.src); });
+                sw.addEventListener('mouseleave', function(){ if((centerEl && centerEl.matches(':hover')) || colorRow.matches(':hover')) startVariantShuffle(); else stopVariantShuffle(); });
+                var lbl = document.createElement('div'); lbl.className = 'productview-color-name'; lbl.textContent = v.color || (function(){ var nm = (v.name||'').toString(); var col=(v.color||'').toString(); try{ if(col){ var esc = col.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); var re = new RegExp('\\s*' + esc + '\\s*$', 'i'); return nm.replace(re,'').trim(); } }catch(_){} return nm; })();
+                item.appendChild(sw);
+                item.appendChild(lbl);
+                colorWrap.appendChild(item);
+                if(idx === 0){ sw.classList.add('selected'); }
+            });
+
+            // Initialize with first variant
+            applyVariant(modelData.variants[0]);
+
+            // Variant image shuffle on hover of main image or color row
+            var shuffleTimer = null; var shuffleIdx = 0;
+            function startVariantShuffle(){
+                if(shuffleTimer) return;
+                if(!modelData.variants || modelData.variants.length <= 1) return;
+                shuffleIdx = Math.max(0, selectedIndex);
+                shuffleTimer = setInterval(function(){
+                    shuffleIdx = (shuffleIdx + 1) % modelData.variants.length;
+                    var vv = modelData.variants[shuffleIdx];
+                    setMainImageSrc(vv.image || '');
+                }, 1200);
+            }
+            function stopVariantShuffle(){ if(shuffleTimer){ clearInterval(shuffleTimer); shuffleTimer = null; } try{ var vv = modelData.variants[selectedIndex]; setMainImageSrc((vv && vv.image) ? vv.image : (document.getElementById('mainShoeImg')||{}).src); }catch(_){} }
+            if(centerEl){ centerEl.addEventListener('mouseenter', startVariantShuffle); centerEl.addEventListener('mouseleave', stopVariantShuffle); }
+            colorRow.addEventListener('mouseenter', startVariantShuffle);
+            colorRow.addEventListener('mouseleave', stopVariantShuffle);
+        })();
         // wire up size buttons to behave like the edit modal size buttons
             try{
             var sizeButtons = document.querySelectorAll('#sizeButtons .product-size-btn');
@@ -1851,19 +1995,21 @@ On page.</div>
             var sel = document.querySelector('#sizeButtons .product-size-btn.primary');
             if(!sel){ /* no-op */ } else { selectSize(sel); }
         }catch(e){}
-        // If the product is a Nike, flip main image and thumbnails horizontally to match product-list
-        try {
-            if (brand && brand.toString().toLowerCase().indexOf('nike') !== -1) {
-                mainImgEl.style.transform = 'scaleX(-1)';
-                document.querySelectorAll('.productview-thumb').forEach(function(t){ t.style.transform = 'scaleX(-1)'; t.style.transformOrigin = 'center'; });
-            } else {
-                mainImgEl.style.transform = '';
-                document.querySelectorAll('.productview-thumb').forEach(function(t){ t.style.transform = ''; });
-            }
-        } catch (e) { /* ignore */ }
+        // If no grouped model (fallback), keep existing Nike flip behavior
+        if(!modelData){
+            try {
+                if (brand && brand.toString().toLowerCase().indexOf('nike') !== -1) {
+                    mainImgEl.style.transform = 'scaleX(-1)';
+                    document.querySelectorAll('.productview-thumb').forEach(function(t){ t.style.transform = 'scaleX(-1)'; t.style.transformOrigin = 'center'; });
+                } else {
+                    mainImgEl.style.transform = '';
+                    document.querySelectorAll('.productview-thumb').forEach(function(t){ t.style.transform = ''; });
+                }
+            } catch (e) { /* ignore */ }
+        }
         // Optionally update badge
         // Description
-        if (title) {
+        if (title && !modelData) {
             document.getElementById('productDesc').innerHTML = title + '<br>With Free Socks<br>Sizes: 41 42 43 44 45 / 8 8.5 9.5 10 11 US<br><span style="font-weight:600;">MENS</span>';
         }
     });
@@ -1984,7 +2130,7 @@ On page.</div>
                 middle.className = 'cart-item-middle';
                 const title = document.createElement('div');
                 title.className = 'cart-item-title';
-                title.textContent = item.title;
+                title.textContent = item.title + (item.preOrder ? ' (Pre-Order)' : '');
                 const brand = document.createElement('div');
                 brand.className = 'cart-item-brand';
                 brand.textContent = item.brand;
@@ -2197,7 +2343,9 @@ On page.</div>
                         price: priceNum,
                         size: selectedEU,
                         image: image,
-                        qty: 1
+                        qty: 1,
+                        preOrder: (addToCartBtn.dataset.preorder === '1') ? true : false,
+                        preOrderMax: 3
                     };
                     if (window.addToCart) {
                         var res = window.addToCart(prod);

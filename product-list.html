@@ -138,11 +138,18 @@
             border-radius: 0;
             overflow: hidden;
         }
+        /* Hover color preview swatches inside image box */
+        .variant-swatches { position:absolute; left:8px; right:8px; bottom:8px; display:none; gap:6px; justify-content:center; z-index:3 }
+        .variant-swatch { width:22px; height:22px; border-radius:50%; border:2px solid #ddd; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.25); cursor:pointer; background:#f8f8f8 }
+        .variant-swatch img { width:100%; height:100%; object-fit:cover }
+        .shoe-card:hover .variant-swatches { display:flex }
         .shoe-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+        .shoe-img-overlay { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 0.25s ease; pointer-events:none }
+        .shoe-img-base { position:relative; z-index:1 }
         .badge-new {
             position: absolute;
             top: 16px;
@@ -166,6 +173,32 @@
             border-radius: 12px;
             padding: 4px 14px;
             z-index: 2;
+        }
+        .badge-preorder {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: #fff7e6;
+            color: #b07100;
+            font-size: 0.98rem;
+            font-weight: 500;
+            border-radius: 12px;
+            padding: 4px 14px;
+            z-index: 2;
+            border: 1px solid #ffd18a;
+        }
+        .badge-bestseller {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: #e6f7ea;
+            color: #1b5e20;
+            font-size: 0.98rem;
+            font-weight: 500;
+            border-radius: 12px;
+            padding: 4px 14px;
+            z-index: 2;
+            border: 1px solid #a5d6a7;
         }
         .flip-horizontal {
             transform: scaleX(-1);
@@ -609,29 +642,35 @@
             return { brand: (brand||'').trim(), title: (title||'').trim() };
         }
 
-        // ===== ADDED: default seed inventory for first-time visitors =====
-        // If a visitor hasn't visited the admin `inventory.html` page yet,
-        // localStorage.inventory may be empty. Seed it here so product-list
-        // shows stock and admin-posted items to first-time visitors.
-        var defaultInventorySeed = [
-            { id:'#P001', name:'Nike Airmax TN Aqua Blue', brand:'Nike', color:'Aqua Blue', image:'IMAGE/NIKE1.png', sizes:{'36':6,'37':8,'38':4,'39':10,'40':6,'41':5,'42':3,'43':2,'44':1,'45':0}, price:1299 },
-            { id:'#P002', name:'Nike Airmax Black', brand:'Nike', color:'Black', image:'IMAGE/NIKE2.png', sizes:{'36':4,'37':2,'38':10,'39':6,'40':7,'41':8,'42':2,'43':11,'44':7,'45':3}, price:2395 },
-            { id:'#P003', name:'Nike GT CUT 2 LEAP HIGH', brand:'Nike', color:'Multicolor', image:'IMAGE/NIKE3.png', sizes:{'36':2,'37':3,'38':6,'39':5,'40':4,'41':3,'42':2,'43':1,'44':0,'45':0}, price:1999 },
-            { id:'#P004', name:'Nike Airmax White', brand:'Nike', color:'White', image:'IMAGE/NIKE4.png', sizes:{'36':6,'37':5,'38':4,'39':6,'40':5,'41':4,'42':3,'43':2,'44':1,'45':0}, price:2199 },
-            { id:'#P005', name:'Nike Airmax Red', brand:'Nike', color:'Red', image:'IMAGE/NIKE5.png', sizes:{'36':3,'37':4,'38':5,'39':6,'40':7,'41':6,'42':5,'43':4,'44':3,'45':2}, price:2299 },
-            { id:'#P006', name:'Cloudtilt Iron Dew Womens', brand:'Cloudtilt', color:'Iridescent', image:'IMAGE/SALESSHOE1.png', sizes:{'36':5,'37':6,'38':7,'39':8,'40':4,'41':2,'42':1,'43':0,'44':0,'45':0}, price:1299 },
-            { id:'#P007', name:'New Balance 530', brand:'New Balance', color:'Silver', image:'IMAGE/SALESSHOE2.png', sizes:{'36':6,'37':12,'38':2,'39':10,'40':4,'41':5,'42':5,'43':1,'44':2,'45':5}, price:1299 }
-        ];
+        // ===== Build inventory solely from admin-managed products =====
+        // Remove legacy seeded products and regenerate inventory from shoeInventoryData.
         try{
-            // Merge seed into existing localStorage.inventory so product-list and admin inventory align
-            var _inv = JSON.parse(localStorage.getItem('inventory')||'null');
-            if(!Array.isArray(_inv)) _inv = [];
-            defaultInventorySeed.forEach(function(s){
-                var exists = _inv.find(function(i){ if(!i) return false; if(i.id && s.id && i.id===s.id) return true; var iname=(i.name||'').toString().trim().toLowerCase(); var sname=(s.name||'').toString().trim().toLowerCase(); return iname && sname && iname===sname; });
-                if(!exists) _inv.push(Object.assign({}, s));
-            });
-            if(_inv.length === 0) _inv = defaultInventorySeed.slice();
-            localStorage.setItem('inventory', JSON.stringify(_inv));
+            var adminProducts = JSON.parse(localStorage.getItem('shoeInventoryData')||'null');
+            var newInv = [];
+            if(Array.isArray(adminProducts) && adminProducts.length){
+                adminProducts.forEach(function(p){
+                    var baseImg = (Array.isArray(p.images) && p.images.length) ? p.images[0] : '';
+                    (Array.isArray(p.colors) ? p.colors : []).forEach(function(c){
+                        var sizesMap = {};
+                        (Array.isArray(c.sizes) ? c.sizes : []).forEach(function(s){ sizesMap[String(s.eu)] = Number(s.stock||0); });
+                        newInv.push({
+                            id: p.sku || p.id || ('gen-' + Math.random().toString(36).slice(2,9)),
+                            name: (p.model||'') + (c.name?(' '+c.name):''),
+                            brand: p.brand || '',
+                            color: c.name || '',
+                            image: baseImg || 'IMAGE/NIKE1.png',
+                            sizes: sizesMap,
+                            price: Number((p.pricing && (p.pricing.sale||p.pricing.original)) || 0),
+                            originalPrice: Number((p.pricing && p.pricing.original) || 0),
+                            productId: p.id || '',
+                            colorId: c.id || '',
+                            createdAt: p.createdAt || null,
+                            gender: p.gender || ''
+                        });
+                    });
+                });
+            }
+            localStorage.setItem('inventory', JSON.stringify(newInv));
         }catch(e){}
 
 
@@ -648,43 +687,199 @@
             }catch(e){ return null; }
         }
 
-        // Render inventory items (admin-posted) into the product grid
+        // Helper to derive a base model name by stripping trailing color from item.name
+        function getBaseModelName(item){
+            try{
+                var name = (item && item.name) ? String(item.name) : '';
+                var color = (item && item.color) ? String(item.color) : '';
+                if(!name) return '';
+                if(color){
+                    var esc = color.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    var re = new RegExp('\\s*' + esc + '\\s*$', 'i');
+                    name = name.replace(re, '').trim();
+                }
+                return name.trim();
+            }catch(e){ return (item && item.name) ? String(item.name) : ''; }
+        }
+
+        // Render inventory items as grouped models (one card per model with color variants)
         function renderInventoryCards(){
             try{
                 var grid = document.getElementById('productGrid');
                 if(!grid) return;
                 var inv = JSON.parse(localStorage.getItem('inventory') || '[]');
                 if(!Array.isArray(inv)) return;
-                // append each inventory item if not already present (by data-id)
+
+                // Group by brand + base model name
+                var groups = {};
                 inv.forEach(function(item){
-                    if(!item || !item.id) return;
-                    // avoid duplicates
-                    if(grid.querySelector('.shoe-card[data-id="'+item.id+'"]')) return;
+                    if(!item) return;
+                    var brand = (item.brand||'').toString().trim();
+                    var base = getBaseModelName(item);
+                    var key = (brand + '|||'+ base).toLowerCase();
+                    if(!groups[key]){
+                        groups[key] = { brand: brand, baseName: base, variants: [] };
+                    }
+                    groups[key].variants.push(item);
+                });
+
+                // Clear existing static cards and rebuild grid from groups
+                grid.innerHTML = '';
+
+                // Precompute best sellers from admin sales log (by productId)
+                var bestSet = (function(){
+                    try{
+                        var sales = JSON.parse(localStorage.getItem('shoeSalesLog')||'[]');
+                        var byPid = {};
+                        sales.forEach(function(s){ var pid = s.productId; var q = Number(s.qty||0); if(pid){ byPid[pid] = (byPid[pid]||0) + q; } });
+                        return new Set(Object.entries(byPid).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5).map(function(e){ return e[0]; }));
+                    }catch(e){ return new Set(); }
+                })();
+
+                Object.keys(groups).forEach(function(key){
+                    var g = groups[key];
+                    if(!g || !g.variants || g.variants.length === 0) return;
+                    // choose primary variant (first with image)
+                    var primary = g.variants.find(function(v){ return v && v.image; }) || g.variants[0];
+                    var imgSrc = (primary && primary.image) ? primary.image : 'IMAGE/NIKE1.png';
+
+                    // price: show single if same across variants, else From min
+                    var prices = g.variants.map(function(v){ return Number(v.price||0); });
+                    var minP = Math.min.apply(null, prices);
+                    var maxP = Math.max.apply(null, prices);
+                    var priceText = (minP === maxP) ? ('P' + Number(minP).toLocaleString(undefined,{minimumFractionDigits:2}))
+                                                    : ('From P' + Number(minP).toLocaleString(undefined,{minimumFractionDigits:2}));
+
+                    // gender: if all same use it, else Unisex
+                    var genders = Array.from(new Set(g.variants.map(function(v){ return (v.gender||'').toString(); }).filter(Boolean)));
+                    var genderAttr = (genders.length === 1) ? genders[0] : 'Unisex';
+
+                    // Compute group-level tags
+                    var nowMs = Date.now();
+                    var isSale = g.variants.some(function(v){ return Number(v.originalPrice||0) > 0 && Number(v.price||0) < Number(v.originalPrice||0); });
+                    var isNew = g.variants.some(function(v){ if(!v.createdAt) return false; var t = new Date(v.createdAt).getTime(); return (nowMs - t) <= (14*24*3600*1000); });
+                    var totalStock = g.variants.reduce(function(acc, v){ try{ var sm=v.sizes||{}; return acc + Object.values(sm).reduce(function(a,b){ return a + (Number(b)||0); },0); }catch(_){ return acc; } }, 0);
+                    var isPreOrder = totalStock === 0;
+                    var anyProductId = (primary && primary.productId) || '';
+                    var isBest = anyProductId && bestSet.has(anyProductId);
+
                     var card = document.createElement('div');
                     card.className = 'shoe-card';
-                    card.setAttribute('data-id', item.id);
-                    if(item.gender) card.setAttribute('data-gender', item.gender);
-                    // choose a size attribute for display (first available or 8)
-                    var displaySize = '';
-                    if(item.sizes){ for(var s in item.sizes){ if(Number(item.sizes[s])>0){ displaySize = s; break; } } }
-                    if(displaySize) card.setAttribute('data-size', displaySize);
                     card.style.cursor = 'pointer';
-                    var priceText = 'P' + Number(item.price||0).toLocaleString(undefined,{minimumFractionDigits:2});
-                    var imgSrc = (item.image) ? item.image : 'IMAGE/NIKE1.png';
-                    var badge = item.badge || '';
-                    // build inner HTML
-                    var badgeHtml = badge ? '<span class="badge-new">'+badge+'</span>' : '';
-                    var flipClass = (item.brand && item.brand.toString().toLowerCase().indexOf('nike')!==-1) ? ' flip-horizontal' : '';
-                    var infoTopPrice = '<span class="shoe-brand">'+(item.brand||'')+'</span><span class="shoe-price">'+priceText+'</span>';
-                    var inner = '<div class="shoe-img-box"><img src="'+imgSrc+'" class="shoe-img'+flipClass+'" alt="'+(item.name||'Product')+'">'+(badge?('<span class="badge-sale">'+badge+'</span>'):'')+'</div>'+
-                                '<div class="shoe-info-box"><div class="shoe-info-top">'+infoTopPrice+'</div><div class="shoe-info-bottom">'+(item.name||'')+'</div></div>';
+                    card.setAttribute('data-brand', g.brand || '');
+                    card.setAttribute('data-title', g.baseName || '');
+                    card.setAttribute('data-base-name', g.baseName || '');
+                    if(genderAttr) card.setAttribute('data-gender', genderAttr);
+
+                    var flipClass = (g.brand && g.brand.toString().toLowerCase().indexOf('nike')!==-1) ? ' flip-horizontal' : '';
+                    // Build swatches markup (limit to 8)
+                    var swHTML = '';
+                    g.variants.slice(0,8).forEach(function(v){ var src = v.image || imgSrc; swHTML += '<button type="button" class="variant-swatch" title="'+(v.color||g.baseName||'Color')+'"><img src="'+src+'" alt="'+(v.color||'color')+'"></button>'; });
+                    var inner = '' +
+                        '<div class="shoe-img-box">' +
+                        '  <img src="'+imgSrc+'" class="shoe-img shoe-img-base'+flipClass+'" alt="'+(g.baseName||'Product')+'">' +
+                        '  <img src="'+imgSrc+'" class="shoe-img shoe-img-overlay'+flipClass+'" alt="'+(g.baseName||'Product')+' preview" aria-hidden="true">' +
+                        (isSale ? '<span class="badge-sale">Sale</span>' : (isNew ? '<span class="badge-new">New</span>' : (isBest ? '<span class="badge-bestseller">Best Seller</span>' : (isPreOrder ? '<span class="badge-preorder">Pre-Order</span>' : '')))) +
+                        '  <div class="variant-swatches">'+ swHTML +'</div>' +
+                        '</div>' +
+                        '<div class="shoe-info-box">' +
+                        '  <div class="shoe-info-top">' +
+                        '    <span class="shoe-brand">'+(g.brand||'')+'</span>' +
+                        '    <span class="shoe-price">'+priceText+'</span>' +
+                        '  </div>' +
+                        '  <div class="shoe-info-bottom">'+(g.baseName||'')+' ('+g.variants.length+' colors)</div>' +
+                        '</div>';
                     card.innerHTML = inner;
-                    // onclick to view product
+
+                    // Click -> store grouped model in localStorage and go to product view
                     card.addEventListener('click', function(){
-                        viewProduct(item.brand||'', item.name||'', priceText, imgSrc, badge||'');
+                        try{
+                            var modelData = {
+                                brand: g.brand || '',
+                                baseName: g.baseName || '',
+                                variants: g.variants.map(function(v){
+                                    return {
+                                        id: v.id || '',
+                                        name: v.name || '',
+                                        color: v.color || '',
+                                        image: v.image || '',
+                                        price: Number(v.price||0),
+                                        sizes: v.sizes || {},
+                                        gender: v.gender || ''
+                                    };
+                                })
+                            };
+                            localStorage.setItem('modelData', JSON.stringify(modelData));
+                            // default select first variant for legacy keys
+                            var sel = modelData.variants[0] || {};
+                            localStorage.setItem('productBrand', modelData.brand);
+                            localStorage.setItem('productTitle', sel.name || (modelData.baseName + (sel.color?(' '+sel.color):'')));
+                            localStorage.setItem('productPrice', 'P' + Number(sel.price||0).toLocaleString(undefined,{minimumFractionDigits:2}));
+                            localStorage.setItem('productImg', sel.image || '');
+                            localStorage.setItem('productBadge', '');
+                        }catch(e){}
+                        window.location.href = 'product-view.html';
                     });
-                    // insert at beginning so newest appear first
-                    grid.insertBefore(card, grid.firstChild);
+
+                    // Swatch hover previews: change image on swatch hover and reset on mouseleave
+                    try{
+                        var baseImg = card.querySelector('.shoe-img-base');
+                        var overlayImg = card.querySelector('.shoe-img-overlay');
+                        var primarySrc = imgSrc;
+                        var variantSrcs = g.variants.map(function(v){ return v && v.image ? v.image : primarySrc; }).filter(Boolean);
+                        // remove duplicate sequential srcs
+                        variantSrcs = variantSrcs.filter(function(src, i, a){ return i===0 || src !== a[i-1]; });
+
+                        function crossfadeTo(src){
+                            if(!baseImg || !overlayImg) return;
+                            try{
+                                overlayImg.style.transition = 'none';
+                                overlayImg.style.opacity = '0';
+                                overlayImg.src = src;
+                                overlayImg.onload = function(){
+                                    overlayImg.onload = null;
+                                    requestAnimationFrame(function(){ overlayImg.style.transition = 'opacity 0.25s ease'; overlayImg.style.opacity = '1'; });
+                                    setTimeout(function(){ baseImg.src = src; overlayImg.style.opacity = '0'; }, 280);
+                                };
+                            }catch(_){ baseImg.src = src; }
+                        }
+
+                        // Manual swatch preview pauses shuffle
+                        card.querySelectorAll('.variant-swatch img').forEach(function(s){
+                            s.addEventListener('mouseenter', function(){
+                                stopShuffle(true);
+                                crossfadeTo(s.getAttribute('src'));
+                            });
+                            s.parentElement.addEventListener('mouseleave', function(){
+                                // resume only if still hovering the card and not over another swatch
+                                if(card.matches(':hover')) startShuffle();
+                            });
+                        });
+
+                        var shuffleIndex = 0;
+                        function startShuffle(){
+                            if(card._shuffleTimer) return;
+                            if(!variantSrcs || variantSrcs.length <= 1) return;
+                            // start from current image index if present
+                            var currentSrc = baseImg ? baseImg.src : primarySrc;
+                            // normalize to relative path end for matching
+                            try{ var parts = currentSrc.split('/'); currentSrc = parts[parts.length-1]; }catch(_){ }
+                            var idx = variantSrcs.findIndex(function(s){ try{ var p=s.split('/'); return (p[p.length-1]===currentSrc); }catch(_){ return s===currentSrc; } });
+                            shuffleIndex = Math.max(0, idx);
+                            card._shuffleTimer = setInterval(function(){
+                                shuffleIndex = (shuffleIndex + 1) % variantSrcs.length;
+                                crossfadeTo(variantSrcs[shuffleIndex]);
+                            }, 1000); // shuffle every 1s
+                        }
+                        function stopShuffle(keepCurrent){ if(card._shuffleTimer){ clearInterval(card._shuffleTimer); card._shuffleTimer = null; } if(!keepCurrent){ crossfadeTo(primarySrc); } }
+
+                        card.addEventListener('mouseenter', startShuffle);
+                        var imgBox = card.querySelector('.shoe-img-box');
+                        if(imgBox){ imgBox.addEventListener('mouseenter', startShuffle); imgBox.addEventListener('mouseleave', function(){ stopShuffle(false); }); }
+                        card.addEventListener('mouseleave', function(){ stopShuffle(false); });
+                    }catch(_){ }
+
+                    grid.appendChild(card);
                 });
             }catch(e){ console.error('renderInventoryCards error', e); }
         }
@@ -741,14 +936,54 @@
                     // size filtering
                     if(selectedEU.length === 0){ card.style.display = ''; visibleCount++; return; }
 
-                    const invRow = findInventoryForProduct(prod);
-                    if(!invRow){ card.style.display = ''; visibleCount++; return; }
-
+                    // Size filtering: for grouped cards, aggregate sizes across variants (brand+base-name)
                     let sizeMatch = false;
-                    for(const eu of selectedEU){
-                        const qty = (invRow.sizes && (invRow.sizes[eu] !== undefined)) ? Number(invRow.sizes[eu]) : null;
-                        if(qty !== null && qty > 0){ sizeMatch = true; break; }
-                    }
+                    try{
+                        const baseName = card.getAttribute('data-base-name') || '';
+                        const brandForCard = (prod.brand || '').toString();
+                        if(baseName){
+                            const inv = JSON.parse(localStorage.getItem('inventory') || '[]');
+                            const matches = Array.isArray(inv) ? inv.filter(function(i){
+                                if(!i) return false;
+                                const b = (i.brand||'').toString().toLowerCase();
+                                const thisB = brandForCard.toLowerCase();
+                                const thisBase = baseName.toLowerCase();
+                                const iBase = (function(){
+                                    try{
+                                        var nm = (i.name||'').toString();
+                                        var col = (i.color||'')+'';
+                                        if(col){
+                                            var esc = col.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                            var re = new RegExp('\\s*' + esc + '\\s*$', 'i');
+                                            nm = nm.replace(re, '').trim();
+                                        }
+                                        return nm.toLowerCase();
+                                    }catch(_){ return (i.name||'').toString().toLowerCase(); }
+                                })();
+                                return b === thisB && iBase === thisBase;
+                            }) : [];
+                            // union of sizes: if any variant has qty>0 for a selected EU size, it's a match
+                            selectedEU.forEach(function(eu){
+                                if(sizeMatch) return;
+                                for(var k=0;k<matches.length;k++){
+                                    var row = matches[k];
+                                    var q = (row && row.sizes && (row.sizes[eu] !== undefined)) ? Number(row.sizes[eu]) : null;
+                                    if(q !== null && q > 0){ sizeMatch = true; break; }
+                                }
+                            });
+                        } else {
+                            // Fallback: single-row match
+                            const invRow = findInventoryForProduct(prod);
+                            if(!invRow){ sizeMatch = true; }
+                            else {
+                                for(const eu of selectedEU){
+                                    const qty = (invRow.sizes && (invRow.sizes[eu] !== undefined)) ? Number(invRow.sizes[eu]) : null;
+                                    if(q !== null && q > 0){ sizeMatch = true; break; }
+                                }
+                            }
+                        }
+                    }catch(e){ sizeMatch = true; }
+
                     card.style.display = sizeMatch ? '' : 'none';
                     if(sizeMatch) visibleCount++;
                 });
@@ -947,7 +1182,7 @@
                 middle.className = 'cart-item-middle';
                 const title = document.createElement('div');
                 title.className = 'cart-item-title';
-                title.textContent = item.title;
+                title.textContent = item.title + (item.preOrder ? ' (Pre-Order)' : '');
                 const brand = document.createElement('div');
                 brand.className = 'cart-item-brand';
                 brand.textContent = item.brand;
